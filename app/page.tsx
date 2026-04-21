@@ -3,12 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
   Shield,
   Radio,
   Map,
   Languages,
   Activity,
-  ArrowRight,
   Zap,
   Users,
   Siren,
@@ -16,6 +16,9 @@ import {
   Tablet,
   QrCode,
 } from "lucide-react";
+import AlertBanner from "./_components/ui/AlertBanner";
+import Badge from "./_components/ui/Badge";
+import Card from "./_components/ui/Card";
 
 /* ============================================
    Hero Section
@@ -23,6 +26,17 @@ import {
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-x-0 top-0 z-20">
+        <AlertBanner
+          variant="danger"
+          messages={[
+            "Demo route slice is live",
+            "Guest, staff, and responder shells now open from the landing page",
+            "External API keys remain placeholders in .env.example",
+          ]}
+        />
+      </div>
+
       {/* Animated background grid */}
       <div className="absolute inset-0 grid-bg" />
 
@@ -32,9 +46,7 @@ function HeroSection() {
         className="absolute bottom-1/4 -right-32 w-96 h-96 bg-danger/8 rounded-full blur-[120px] animate-float"
         style={{ animationDelay: "1.5s" }}
       />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-safe/5 rounded-full blur-[150px]"
-      />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-safe/5 rounded-full blur-[150px]" />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
         {/* Status badge */}
@@ -43,7 +55,7 @@ function HeroSection() {
             <span className="absolute inline-flex h-full w-full rounded-full bg-safe opacity-75 animate-ping" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-safe" />
           </span>
-          System Operational — v1.0 Crisis Engine
+          System Operational — foundation slice running
         </div>
 
         {/* Main heading */}
@@ -63,9 +75,11 @@ function HeroSection() {
           className="animate-fade-in max-w-2xl mx-auto text-lg sm:text-xl text-text-secondary mb-10 leading-relaxed"
           style={{ animationDelay: "0.2s" }}
         >
-          GuardianLink bridges the gap between distressed guests, hotel security,
-          and first responders — all with{" "}
-          <span className="text-brand-light font-semibold">zero app downloads</span>{" "}
+          GuardianLink bridges the gap between distressed guests, hotel
+          security, and first responders — all with{" "}
+          <span className="text-brand-light font-semibold">
+            zero app downloads
+          </span>{" "}
           and{" "}
           <span className="text-safe-light font-semibold">
             AI-powered intelligence
@@ -120,10 +134,7 @@ function HeroSection() {
               key={stat.label}
               className="glass rounded-xl p-4 text-center hover:border-brand/20 transition-all duration-300"
             >
-              <stat.icon
-                size={18}
-                className="mx-auto mb-2 text-brand-light"
-              />
+              <stat.icon size={18} className="mx-auto mb-2 text-brand-light" />
               <div className="text-2xl font-bold text-text-primary">
                 {stat.value}
               </div>
@@ -165,7 +176,9 @@ function FeatureCard({
         <div className="p-3 rounded-xl bg-brand/10 text-brand-light group-hover:bg-brand/20 transition-colors">
           {icon}
         </div>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tagColor}`}>
+        <span
+          className={`text-xs font-bold px-2.5 py-1 rounded-full ${tagColor}`}
+        >
           {tag}
         </span>
       </div>
@@ -176,6 +189,40 @@ function FeatureCard({
         {description}
       </p>
     </div>
+  );
+}
+
+function RoutePreviewCard({
+  icon,
+  title,
+  description,
+  route,
+  accentClass,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  route: string;
+  accentClass: string;
+}) {
+  return (
+    <Card variant="glass" hover className="h-full">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className={`p-3 rounded-xl ${accentClass}`}>{icon}</div>
+        <Badge variant="neutral">{route}</Badge>
+      </div>
+      <h3 className="text-xl font-bold text-text-primary mb-2">{title}</h3>
+      <p className="text-text-secondary text-sm leading-relaxed mb-6">
+        {description}
+      </p>
+      <Link
+        href={route}
+        className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:border-brand/30 hover:bg-surface-elevated"
+      >
+        Open route
+        <ArrowRight size={14} />
+      </Link>
+    </Card>
   );
 }
 
@@ -256,9 +303,10 @@ function TierSection() {
       subtitle: "Zero-Install PWA",
       description:
         "Scan a QR code. Get life-saving navigation, SOS reporting, and real-time alerts — in your language.",
-      color: "brand",
       link: "/room/402",
       gradient: "from-brand/20 to-transparent",
+      accentClass: "bg-brand/10 text-brand-light",
+      subtitleClass: "bg-brand/15 text-brand-light",
     },
     {
       icon: <MonitorDot size={32} />,
@@ -266,9 +314,10 @@ function TierSection() {
       subtitle: "Desktop Dashboard",
       description:
         "AI-synthesized incident feeds, live heatmaps, danger zone management, and one-click broadcasts.",
-      color: "safe",
       link: "/staff",
       gradient: "from-safe/20 to-transparent",
+      accentClass: "bg-safe/10 text-safe-light",
+      subtitleClass: "bg-safe/15 text-safe-light",
     },
     {
       icon: <Siren size={32} />,
@@ -276,9 +325,10 @@ function TierSection() {
       subtitle: "Tactical Tablet",
       description:
         "Technical floor plans, triage scorecards, room-by-room status, and AI-powered voice translation.",
-      color: "warning",
       link: "/responder",
       gradient: "from-warning/20 to-transparent",
+      accentClass: "bg-warning/10 text-warning-light",
+      subtitleClass: "bg-warning/15 text-warning-light",
     },
   ];
 
@@ -311,14 +361,18 @@ function TierSection() {
                 className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${tier.gradient}`}
               />
 
-              <div className={`p-4 rounded-2xl bg-${tier.color}/10 text-${tier.color}-light w-fit mb-6 group-hover:bg-${tier.color}/20 transition-colors`}>
+              <div
+                className={`p-4 rounded-2xl ${tier.accentClass} w-fit mb-6 group-hover:opacity-90 transition-colors`}
+              >
                 {tier.icon}
               </div>
 
               <h3 className="text-xl font-bold text-text-primary mb-1">
                 {tier.title}
               </h3>
-              <p className={`text-sm font-semibold text-${tier.color}-light mb-3`}>
+              <p
+                className={`text-sm font-semibold ${tier.subtitleClass} mb-3 inline-flex px-2.5 py-1 rounded-full`}
+              >
                 {tier.subtitle}
               </p>
               <p className="text-text-secondary text-sm leading-relaxed mb-6">
@@ -368,10 +422,63 @@ function TechStackSection() {
               <div className="text-sm font-bold text-text-primary">
                 {tech.name}
               </div>
-              <div className="text-xs text-text-muted mt-1">
-                {tech.detail}
-              </div>
+              <div className="text-xs text-text-muted mt-1">{tech.detail}</div>
             </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function LaunchPadsSection() {
+  const routes = [
+    {
+      icon: <QrCode size={24} />,
+      title: "Guest entry shell",
+      description:
+        "A room-aware crisis experience for guest access, status, and future SOS flows.",
+      route: "/room/402",
+      accentClass: "bg-brand/10 text-brand-light",
+    },
+    {
+      icon: <MonitorDot size={24} />,
+      title: "Staff command shell",
+      description:
+        "A tactical desktop dashboard scaffold for incident synthesis, heatmaps, and broadcasts.",
+      route: "/staff",
+      accentClass: "bg-safe/10 text-safe-light",
+    },
+    {
+      icon: <Tablet size={24} />,
+      title: "Responder bridge shell",
+      description:
+        "A tablet-first responder view for floor plans, triage, and room-level coordination.",
+      route: "/responder",
+      accentClass: "bg-warning/10 text-warning-light",
+    },
+  ];
+
+  return (
+    <section className="py-24 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <Badge variant="info" dot pulse className="mb-4">
+            Implemented launch pads
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-text-primary mb-4">
+            Routes that already work
+          </h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">
+            This slice wires the public landing page to real route targets so
+            the project can grow from a functioning navigation shell instead of
+            a static mock.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {routes.map((route) => (
+            <RoutePreviewCard key={route.route} {...route} />
           ))}
         </div>
       </div>
@@ -412,6 +519,7 @@ export default function HomePage() {
       <HeroSection />
       <FeaturesSection />
       <TierSection />
+      <LaunchPadsSection />
       <TechStackSection />
       <Footer />
     </div>

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   title: "GuardianLink — Crisis Coordination for Hospitality",
   description:
     "A decentralized emergency response ecosystem for the hospitality industry. Zero-install PWA that bridges guests, staff, and first responders during crises.",
+  manifest: "/manifest.webmanifest",
   keywords: [
     "emergency response",
     "hospitality safety",
@@ -32,19 +33,18 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  themeColor: "#0b0e17",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
-    >
-      <body className="min-h-screen flex flex-col antialiased">
-        {children}
-      </body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="min-h-screen flex flex-col antialiased">{children}</body>
     </html>
   );
 }

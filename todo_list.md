@@ -7,39 +7,43 @@
 ---
 
 ## Phase 1: Project Foundation & Configuration
+
 - [x] Initialize Next.js 16 project
-- [ ] Set up environment variables (`.env.example`)
+- [x] Set up environment variables (`.env.example`)
 - [ ] Configure `next.config.ts` (security headers, PWA support, image domains)
-- [ ] Set up project folder structure (route groups, shared components, lib)
-- [ ] Install core dependencies (Firebase SDK, Google Maps, Gemini AI SDK)
-- [ ] Set up global design system (Tailwind theme, fonts, colors)
-- [ ] Set up root layout with metadata and fonts
+- [x] Set up project folder structure (route groups, shared components, lib)
+- [x] Install core dependencies (Firebase SDK, Google Maps, Gemini AI SDK)
+- [x] Set up global design system (Tailwind theme, fonts, colors)
+- [x] Set up root layout with metadata and fonts
 
 ## Phase 2: Design System & Shared Components
-- [ ] Create global CSS with custom design tokens (dark mode, emergency colors)
+
+- [x] Create global CSS with custom design tokens (dark mode, emergency colors)
 - [ ] Build shared UI components:
-  - [ ] `Button` (primary, danger, ghost variants)
-  - [ ] `Card` (glassmorphic panels)
-  - [ ] `Badge` (status indicators: safe, danger, warning)
-  - [ ] `AlertBanner` (emergency ticker)
-  - [ ] `StatusPulse` (animated pulsing status dots)
+  - [x] `Button` (primary, danger, ghost variants)
+  - [x] `Card` (glassmorphic panels)
+  - [x] `Badge` (status indicators: safe, danger, warning)
+  - [x] `AlertBanner` (emergency ticker)
+  - [x] `StatusPulse` (animated pulsing status dots)
   - [ ] `Sidebar` / `Navbar` (navigation)
-  - [ ] `Modal` (overlays for alerts)
-  - [ ] `LoadingSkeleton` (loading states)
+  - [x] `Modal` (overlays for alerts)
+  - [x] `LoadingSkeleton` (loading states)
 
 ## Phase 3: Landing Page (Marketing / Entry Point)
-- [ ] Build the hero section with animated shield/crisis theme
-- [ ] Feature showcase sections (Safe-Path, Gemini AI, Multilingual SOS, Heatmap)
-- [ ] QR code demo section (simulated room entry)
-- [ ] Call-to-action buttons (Guest Demo, Staff Login, Responder Login)
-- [ ] Responsive layout & micro-animations
+
+- [x] Build the hero section with animated shield/crisis theme
+- [x] Feature showcase sections (Safe-Path, Gemini AI, Multilingual SOS, Heatmap)
+- [x] QR code demo section (simulated room entry)
+- [x] Call-to-action buttons (Guest Demo, Staff Login, Responder Login)
+- [x] Responsive layout & micro-animations
 - [ ] **GIT COMMIT: `feat: landing page with hero and feature showcase`**
 
 ## Phase 4: Guest Survival Hub (PWA) — `/guest/[roomId]`
+
 - [ ] **4.1 Guest Entry & Room Identification**
-  - [ ] Dynamic route `app/(guest)/room/[roomId]/page.tsx`
+  - [x] Dynamic route `app/(guest)/room/[roomId]/page.tsx`
   - [ ] Room context provider (room number, floor, hotel info)
-  - [ ] Welcome screen with emergency instructions
+  - [x] Welcome screen with emergency instructions
 - [ ] **4.2 One-Tap SOS System**
   - [ ] SOS button component (large, pulsing, red)
   - [ ] MediaRecorder integration (audio/video capture)
@@ -50,7 +54,7 @@
   - [ ] Google Maps embed with floor plan overlay
   - [ ] Custom GroundOverlay for hotel floor plans
   - [ ] Danger zone visualization (red zones)
-  - [ ] Pathfinding logic (A* or waypoint-based routing)
+  - [ ] Pathfinding logic (A\* or waypoint-based routing)
   - [ ] Real-time path updates when danger zones change
 - [ ] **4.4 Multilingual Emergency Ticker**
   - [ ] Emergency instruction ticker component
@@ -64,6 +68,7 @@
 - [ ] **GIT COMMIT: `feat: guest PWA with SOS, navigation, and multilingual alerts`**
 
 ## Phase 5: Staff Command Center — `/staff`
+
 - [ ] **5.1 Staff Authentication & Layout**
   - [ ] Staff dashboard layout with sidebar navigation
   - [ ] Authentication gate (demo mode with bypass)
@@ -94,6 +99,7 @@
 - [ ] **GIT COMMIT: `feat: staff command center with AI feed, heatmap, and broadcasts`**
 
 ## Phase 6: First Responder Bridge — `/responder`
+
 - [ ] **6.1 Responder Layout & Auth**
   - [ ] Tactical tablet-optimized layout
   - [ ] Responder authentication gate
@@ -118,6 +124,7 @@
 - [ ] **GIT COMMIT: `feat: first responder bridge with floor plans, translator, and triage`**
 
 ## Phase 7: AI Intelligence Layer
+
 - [ ] **7.1 Multimodal Triage**
   - [ ] API route `app/api/triage/route.ts`
   - [ ] Gemini 3 Flash video/audio/image analysis
@@ -133,6 +140,7 @@
 - [ ] **GIT COMMIT: `feat: AI intelligence layer with triage, synthesis, and privacy`**
 
 ## Phase 8: Real-time Engine (Firebase)
+
 - [ ] **8.1 Firestore Schema & Collections**
   - [ ] `hotels` collection
   - [ ] `rooms` collection
@@ -153,7 +161,8 @@
 - [ ] **GIT COMMIT: `feat: Firebase real-time engine with Firestore and FCM`**
 
 ## Phase 9: PWA & Offline Support
-- [ ] Web App Manifest (`app/manifest.ts`)
+
+- [x] Web App Manifest (`app/manifest.ts`)
 - [ ] Service Worker (`public/sw.js`)
 - [ ] Offline caching for maps and essential UI
 - [ ] PWA icons (192x192 and 512x512)
@@ -161,6 +170,7 @@
 - [ ] **GIT COMMIT: `feat: PWA support with service worker and offline caching`**
 
 ## Phase 10: Polish, Security & Accessibility
+
 - [ ] Security headers in `next.config.ts`
 - [ ] ARIA labels for all interactive elements
 - [ ] High-contrast emergency mode
@@ -174,24 +184,25 @@
 
 ## Environment Variables Required
 
-| Variable | Purpose | Where Used |
-|---|---|---|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase client config | Client |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase auth domain | Client |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID | Client |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase storage | Client |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID | Client |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID | Client |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API | Client |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | VAPID public key for push notifications | Client |
-| `GOOGLE_GEMINI_API_KEY` | Gemini 3 Flash API key | Server |
-| `GOOGLE_CLOUD_TRANSLATION_API_KEY` | Cloud Translation API | Server |
-| `VAPID_PRIVATE_KEY` | VAPID private key for push notifications | Server |
-| `FIREBASE_ADMIN_CLIENT_EMAIL` | Firebase Admin SDK | Server |
-| `FIREBASE_ADMIN_PRIVATE_KEY` | Firebase Admin SDK | Server |
+| Variable                                   | Purpose                                  | Where Used |
+| ------------------------------------------ | ---------------------------------------- | ---------- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`             | Firebase client config                   | Client     |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`         | Firebase auth domain                     | Client     |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`          | Firebase project ID                      | Client     |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`      | Firebase storage                         | Client     |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID                            | Client     |
+| `NEXT_PUBLIC_FIREBASE_APP_ID`              | Firebase app ID                          | Client     |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`          | Google Maps JavaScript API               | Client     |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`             | VAPID public key for push notifications  | Client     |
+| `GOOGLE_GEMINI_API_KEY`                    | Gemini 3 Flash API key                   | Server     |
+| `GOOGLE_CLOUD_TRANSLATION_API_KEY`         | Cloud Translation API                    | Server     |
+| `VAPID_PRIVATE_KEY`                        | VAPID private key for push notifications | Server     |
+| `FIREBASE_ADMIN_CLIENT_EMAIL`              | Firebase Admin SDK                       | Server     |
+| `FIREBASE_ADMIN_PRIVATE_KEY`               | Firebase Admin SDK                       | Server     |
 
 ---
 
 ## Progress Summary
-- **Completed:** 1 / ~80 tasks
-- **Current Phase:** Phase 1 — Project Foundation
+
+- **Completed:** 22 / ~80 tasks
+- **Current Phase:** Phase 4 — Guest Survival Hub
