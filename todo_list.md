@@ -10,7 +10,7 @@
 
 - [x] Initialize Next.js 16 project
 - [x] Set up environment variables (`.env.example`)
-- [ ] Configure `next.config.ts` (security headers, PWA support, image domains)
+- [x] Configure `next.config.ts` (security headers, PWA support, image domains)
 - [x] Set up project folder structure (route groups, shared components, lib)
 - [x] Install core dependencies (Firebase SDK, Google Maps, Gemini AI SDK)
 - [x] Set up global design system (Tailwind theme, fonts, colors)

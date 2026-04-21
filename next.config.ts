@@ -1,7 +1,37 @@
 import type { NextConfig } from "next";
 
+const remoteImagePatterns = [
+  {
+    protocol: "https",
+    hostname: "firebasestorage.googleapis.com",
+    pathname: "/v0/b/**",
+  },
+  {
+    protocol: "https",
+    hostname: "storage.googleapis.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "maps.googleapis.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "maps.gstatic.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "lh3.googleusercontent.com",
+    pathname: "/**",
+  },
+] as const satisfies NonNullable<NextConfig["images"]>["remotePatterns"];
+
 const nextConfig: NextConfig = {
-  /* Security headers and PWA support */
+  images: {
+    remotePatterns: remoteImagePatterns,
+  },
   async headers() {
     return [
       {
@@ -10,8 +40,21 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+      {
+        source: "/manifest.webmanifest",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
           },
         ],
       },
