@@ -12,8 +12,18 @@ interface NavbarProps {
 
 const navigationItems = [
   { href: "/", label: "Home", section: "home" as const, icon: Shield },
-  { href: "/room/402", label: "Guest", section: "guest" as const, icon: QrCode },
-  { href: "/staff", label: "Staff", section: "staff" as const, icon: MonitorDot },
+  {
+    href: "/room/402",
+    label: "Guest",
+    section: "guest" as const,
+    icon: QrCode,
+  },
+  {
+    href: "/staff",
+    label: "Staff",
+    section: "staff" as const,
+    icon: MonitorDot,
+  },
   {
     href: "/responder",
     label: "Responder",
@@ -29,7 +39,9 @@ export default function Navbar({
   className = "",
 }: NavbarProps) {
   return (
-    <header className={`glass sticky top-0 z-40 border-b border-border ${className}`}>
+    <header
+      className={`glass sticky top-0 z-40 border-b border-border ${className}`}
+    >
       <div
         className={`mx-auto flex w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8 ${
           compact ? "py-3" : "py-4"
@@ -40,7 +52,9 @@ export default function Navbar({
             <Shield size={20} />
           </div>
           <div>
-            <div className="text-sm font-bold text-text-primary">GuardianLink</div>
+            <div className="text-sm font-bold text-text-primary">
+              GuardianLink
+            </div>
             <div className="text-xs text-text-muted">
               {roomLabel || "Crisis coordination system"}
             </div>
