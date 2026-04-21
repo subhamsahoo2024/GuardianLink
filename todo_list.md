@@ -25,7 +25,7 @@
   - [x] `Badge` (status indicators: safe, danger, warning)
   - [x] `AlertBanner` (emergency ticker)
   - [x] `StatusPulse` (animated pulsing status dots)
-  - [ ] `Sidebar` / `Navbar` (navigation)
+  - [x] `Sidebar` / `Navbar` (navigation)
   - [x] `Modal` (overlays for alerts)
   - [x] `LoadingSkeleton` (loading states)
 

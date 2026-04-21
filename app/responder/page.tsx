@@ -8,6 +8,7 @@ import {
 import Badge from "@/app/_components/ui/Badge";
 import Card from "@/app/_components/ui/Card";
 import LoadingSkeleton from "@/app/_components/ui/LoadingSkeleton";
+import Navbar from "@/app/_components/ui/Navbar";
 import StatusPulse from "@/app/_components/ui/StatusPulse";
 
 const floorLayers = [
@@ -21,6 +22,8 @@ export default function ResponderPage() {
   return (
     <main className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
+        <Navbar active="responder" compact roomLabel="Responder Bridge" />
+
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <Badge variant="warning" dot pulse>

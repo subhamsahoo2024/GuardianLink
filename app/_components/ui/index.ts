@@ -5,3 +5,4 @@ export { default as AlertBanner } from "./AlertBanner";
 export { default as StatusPulse } from "./StatusPulse";
 export { default as Modal } from "./Modal";
 export { default as LoadingSkeleton } from "./LoadingSkeleton";
+export { default as Navbar } from "./Navbar";
