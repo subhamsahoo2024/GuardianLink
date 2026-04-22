@@ -42,10 +42,10 @@
 
 - [ ] **4.1 Guest Entry & Room Identification**
   - [x] Dynamic route `app/(guest)/room/[roomId]/page.tsx`
-  - [ ] Room context provider (room number, floor, hotel info)
+  - [x] Room context provider (room number, floor, hotel info)
   - [x] Welcome screen with emergency instructions
 - [ ] **4.2 One-Tap SOS System**
-  - [ ] SOS button component (large, pulsing, red)
+  - [x] SOS button component (large, pulsing, red)
   - [ ] MediaRecorder integration (audio/video capture)
   - [ ] SOS report form (text + media)
   - [ ] API route `app/api/sos/route.ts` to receive reports
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 22 / ~80 tasks
+- **Completed:** 24 / ~80 tasks
 - **Current Phase:** Phase 4 — Guest Survival Hub
