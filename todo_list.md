@@ -100,28 +100,28 @@
 
 ## Phase 6: First Responder Bridge — `/responder`
 
-- [ ] **6.1 Responder Layout & Auth**
-  - [ ] Tactical tablet-optimized layout
-  - [ ] Responder authentication gate
-- [ ] **6.2 Technical Floor Plan Overlays**
-  - [ ] GeoJSON data layers for technical blueprints
-  - [ ] Toggle controls for: fire hydrants, gas lines, electrical shut-offs
-  - [ ] Layer visibility checklist UI
-- [ ] **6.3 Gemini Live Translator Bridge**
-  - [ ] WebSocket connection setup
-  - [ ] Two-way audio stream between responder and guest
-  - [ ] Gemini Live API integration for real-time translation
-  - [ ] Audio visualizer for active calls
-- [ ] **6.4 Triage Scorecard**
-  - [ ] Real-time evacuated vs. missing counts
-  - [ ] Firestore aggregation queries
-  - [ ] Visual scorecard with progress bars
-  - [ ] Per-floor breakdown
-- [ ] **6.5 Room-by-Room Status Grid**
-  - [ ] Grid view of all rooms with status icons
-  - [ ] Click-to-connect to trapped guests
-  - [ ] SOS signal details per room
-- [ ] **GIT COMMIT: `feat: first responder bridge with floor plans, translator, and triage`**
+- [x] **6.1 Responder Layout & Auth**
+  - [x] Tactical tablet-optimized layout
+  - [x] Responder authentication gate
+- [x] **6.2 Technical Floor Plan Overlays**
+  - [x] GeoJSON data layers for technical blueprints
+  - [x] Toggle controls for: fire hydrants, gas lines, electrical shut-offs
+  - [x] Layer visibility checklist UI
+- [x] **6.3 Gemini Live Translator Bridge**
+  - [x] WebSocket connection setup
+  - [x] Two-way audio stream between responder and guest
+  - [x] Gemini Live API integration for real-time translation
+  - [x] Audio visualizer for active calls
+- [x] **6.4 Triage Scorecard**
+  - [x] Real-time evacuated vs. missing counts
+  - [x] Firestore aggregation queries
+  - [x] Visual scorecard with progress bars
+  - [x] Per-floor breakdown
+- [x] **6.5 Room-by-Room Status Grid**
+  - [x] Grid view of all rooms with status icons
+  - [x] Click-to-connect to trapped guests
+  - [x] SOS signal details per room
+- [x] **GIT COMMIT: `feat: first responder bridge with floor plans, translator, and triage`**
 
 ## Phase 7: AI Intelligence Layer
 
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 56 / ~80 tasks
-- **Current Phase:** Phase 6 — First Responder Bridge
+- **Completed:** 73 / ~80 tasks
+- **Current Phase:** Phase 7 — AI Intelligence Layer
