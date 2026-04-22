@@ -49,7 +49,7 @@
   - [x] MediaRecorder integration (audio/video capture)
   - [x] SOS report form (text + media)
   - [x] API route `app/api/sos/route.ts` to receive reports
-  - [ ] Integration with Firebase Storage for media uploads
+  - [x] Integration with Firebase Storage for media uploads
 - [ ] **4.3 Dynamic Safe-Path Navigation**
   - [ ] Google Maps embed with floor plan overlay
   - [ ] Custom GroundOverlay for hotel floor plans
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 27 / ~80 tasks
+- **Completed:** 28 / ~80 tasks
 - **Current Phase:** Phase 4 — Guest Survival Hub

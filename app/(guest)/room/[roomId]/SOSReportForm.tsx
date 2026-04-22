@@ -2,9 +2,11 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import { Mic, Paperclip, Send, Square, Video } from "lucide-react";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
+import { storage } from "@/lib/firebase";
 import { useRoomContext } from "./RoomContext";
 
 type CaptureMode = "audio" | "video";
@@ -13,19 +15,13 @@ function pickSupportedMimeType(mode: CaptureMode): string | undefined {
   const candidates =
     mode === "audio"
       ? ["audio/webm;codecs=opus", "audio/webm"]
-      : ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+      : [
+          "video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus",
+          "video/webm",
+        ];
 
   return candidates.find((mime) => MediaRecorder.isTypeSupported(mime));
-}
-
-async function blobToBase64(blob: Blob): Promise<string> {
-  const arrayBuffer = await blob.arrayBuffer();
-  let binary = "";
-  const bytes = new Uint8Array(arrayBuffer);
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
 }
 
 export default function SOSReportForm() {
@@ -36,7 +32,10 @@ export default function SOSReportForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [mediaInfo, setMediaInfo] = useState<{ mimeType: string; size: number } | null>(null);
+  const [mediaInfo, setMediaInfo] = useState<{
+    mimeType: string;
+    size: number;
+  } | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -55,6 +54,32 @@ export default function SOSReportForm() {
     recorderRef.current = null;
     chunksRef.current = [];
     setIsRecording(false);
+  }
+
+  async function uploadMediaToFirebase(blob: Blob) {
+    const extension = blob.type.includes("video") ? "webm" : "ogg";
+    const timestamp = Date.now();
+    const filename = `${timestamp}.${extension}`;
+    const storagePath = `sos_reports/${roomId}/${filename}`;
+    const mediaRef = ref(storage, storagePath);
+
+    await uploadBytes(mediaRef, blob, {
+      contentType: blob.type || "application/octet-stream",
+      customMetadata: {
+        roomId,
+        hotelName,
+        floor: String(floor),
+      },
+    });
+
+    const downloadURL = await getDownloadURL(mediaRef);
+
+    return {
+      storagePath,
+      downloadURL,
+      mimeType: blob.type || "application/octet-stream",
+      size: blob.size,
+    };
   }
 
   async function startRecording() {
@@ -90,16 +115,23 @@ export default function SOSReportForm() {
       };
 
       recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "application/octet-stream" });
+        const blob = new Blob(chunksRef.current, {
+          type: recorder.mimeType || "application/octet-stream",
+        });
         mediaBlobRef.current = blob;
-        setMediaInfo({ mimeType: blob.type || "application/octet-stream", size: blob.size });
+        setMediaInfo({
+          mimeType: blob.type || "application/octet-stream",
+          size: blob.size,
+        });
         await cleanupMedia();
       };
 
       recorder.start();
       setIsRecording(true);
     } catch {
-      setError("Unable to start recording. Please allow microphone/camera access.");
+      setError(
+        "Unable to start recording. Please allow microphone/camera access.",
+      );
       await cleanupMedia();
     }
   }
@@ -127,11 +159,7 @@ export default function SOSReportForm() {
 
     try {
       const media = mediaBlobRef.current
-        ? {
-            mimeType: mediaBlobRef.current.type || "application/octet-stream",
-            size: mediaBlobRef.current.size,
-            base64: await blobToBase64(mediaBlobRef.current),
-          }
+        ? await uploadMediaToFirebase(mediaBlobRef.current)
         : undefined;
 
       const response = await fetch("/api/sos", {
@@ -156,7 +184,11 @@ export default function SOSReportForm() {
       setMessage("");
       mediaBlobRef.current = null;
       setMediaInfo(null);
-      setSuccess("SOS report sent to command center.");
+      setSuccess(
+        media
+          ? "SOS report and media evidence sent to command center."
+          : "SOS report sent to command center.",
+      );
     } catch {
       setError("Unable to send SOS report right now. Please retry.");
     } finally {
@@ -168,8 +200,12 @@ export default function SOSReportForm() {
     <Card variant="glass" hover>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-text-primary">SOS report form</h3>
-          <p className="text-sm text-text-secondary">Send text and optional audio/video evidence to responders.</p>
+          <h3 className="text-lg font-bold text-text-primary">
+            SOS report form
+          </h3>
+          <p className="text-sm text-text-secondary">
+            Send text and optional audio/video evidence to responders.
+          </p>
         </div>
         <Badge variant="danger" dot pulse>
           Live
@@ -197,7 +233,10 @@ export default function SOSReportForm() {
         </Button>
       </div>
 
-      <label className="mt-4 block text-sm font-semibold text-text-secondary" htmlFor="sos-message">
+      <label
+        className="mt-4 block text-sm font-semibold text-text-secondary"
+        htmlFor="sos-message"
+      >
         Situation summary
       </label>
       <textarea
@@ -250,8 +289,12 @@ export default function SOSReportForm() {
         </Button>
       </div>
 
-      {error && <p className="mt-4 text-sm font-semibold text-danger-light">{error}</p>}
-      {success && <p className="mt-4 text-sm font-semibold text-safe-light">{success}</p>}
+      {error && (
+        <p className="mt-4 text-sm font-semibold text-danger-light">{error}</p>
+      )}
+      {success && (
+        <p className="mt-4 text-sm font-semibold text-safe-light">{success}</p>
+      )}
     </Card>
   );
 }
