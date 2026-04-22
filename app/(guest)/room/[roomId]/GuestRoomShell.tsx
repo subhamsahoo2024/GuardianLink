@@ -10,6 +10,7 @@ import LoadingSkeleton from "@/app/_components/ui/LoadingSkeleton";
 import StatusPulse from "@/app/_components/ui/StatusPulse";
 import SOSButton from "./SOSButton";
 import SOSReportForm from "./SOSReportForm";
+import BatteryAwareLocationTracker from "./BatteryAwareLocationTracker";
 import MultilingualEmergencyTicker from "./MultilingualEmergencyTicker";
 import { useRoomContext } from "./RoomContext";
 
@@ -61,7 +62,7 @@ export default function GuestRoomShell() {
         variant="warning"
         messages={[
           `Room ${roomId} loaded (${hotelName}, floor ${floor})`,
-          "SOS capture and routing controls will be added in the next slice",
+          "SOS capture, route guidance, and battery-aware location tracking are active",
         ]}
         className="rounded-2xl"
       />
@@ -199,6 +200,8 @@ export default function GuestRoomShell() {
               ))}
             </div>
           </Card>
+
+          <BatteryAwareLocationTracker />
 
           <Card variant="elevated" hover>
             <div className="flex items-center gap-3">

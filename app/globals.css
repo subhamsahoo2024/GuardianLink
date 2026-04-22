@@ -89,6 +89,47 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html[data-high-contrast="true"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --surface: #0f172a;
+  --surface-elevated: #111827;
+  --brand: #22d3ee;
+  --brand-light: #67e8f9;
+  --brand-dark: #0891b2;
+  --danger: #ff4d4f;
+  --danger-light: #ffb3b3;
+  --warning: #fbbf24;
+  --warning-light: #fde68a;
+  --safe: #34d399;
+  --safe-light: #a7f3d0;
+  --critical: #ef4444;
+  --no-response: #9ca3af;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e7eb;
+  --text-muted: #cbd5e1;
+  --border: #475569;
+  --border-light: #94a3b8;
+}
+
+html[data-high-contrast="true"] body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--brand-light);
+  outline-offset: 2px;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

@@ -41,13 +41,18 @@ export default function Button({
   className = "",
   children,
   disabled,
+  type,
   ...props
 }: ButtonProps) {
   return (
     <button
+      type={type ?? "button"}
+      aria-busy={loading || undefined}
+      aria-disabled={disabled || loading || undefined}
       className={`
         inline-flex items-center justify-center gap-2 font-semibold
         transition-all duration-200 ease-out cursor-pointer
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-light/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}
         ${sizeStyles[size]}

@@ -606,7 +606,9 @@ export default function StaffPage() {
               {sectionLabels.map((section) => (
                 <button
                   key={section.key}
+                  type="button"
                   onClick={() => setActiveSection(section.key)}
+                  aria-label={`Show ${section.label} section`}
                   className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${
                     activeSection === section.key
                       ? "bg-brand/15 text-brand-light"
@@ -649,10 +651,12 @@ export default function StaffPage() {
                   {incidents.map((incident) => (
                     <button
                       key={incident.id}
+                      type="button"
                       onClick={() => {
                         setSelectedIncidentId(incident.id);
                         setActiveSection("management");
                       }}
+                      aria-label={`Open incident ${incident.title}`}
                       className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                         selectedIncident?.id === incident.id
                           ? "border-brand/40 bg-brand/10"
@@ -727,7 +731,9 @@ export default function StaffPage() {
                     {[2, 3, 4].map((floor) => (
                       <button
                         key={floor}
+                        type="button"
                         onClick={() => setSelectedFloor(floor)}
+                        aria-label={`Select floor ${floor}`}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
                           selectedFloor === floor
                             ? "bg-brand/15 text-brand-light"

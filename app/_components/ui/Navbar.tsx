@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MonitorDot, QrCode, Shield, TabletSmartphone } from "lucide-react";
+import AccessibilityToggle from "@/app/_components/ui/AccessibilityToggle";
 
 type NavbarSection = "home" | "guest" | "staff" | "responder";
 
@@ -81,6 +82,7 @@ export default function Navbar({
               </Link>
             );
           })}
+          <AccessibilityToggle />
         </nav>
 
         <div className="ml-auto flex items-center gap-2 md:hidden">

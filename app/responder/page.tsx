@@ -752,7 +752,9 @@ export default function ResponderPage() {
                 {[2, 3, 4].map((floor) => (
                   <button
                     key={floor}
+                      type="button"
                     onClick={() => setSelectedFloor(floor)}
+                      aria-label={`Select floor ${floor}`}
                     className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
                       selectedFloor === floor
                         ? "bg-brand/15 text-brand-light"
@@ -1007,6 +1009,7 @@ export default function ResponderPage() {
             {rooms.map((room) => (
               <button
                 key={room.roomId}
+                type="button"
                 onClick={() => {
                   setSelectedRoomId(room.roomId);
                   if (
@@ -1016,6 +1019,7 @@ export default function ResponderPage() {
                     void startLiveSession(room.roomId);
                   }
                 }}
+                aria-label={`Open room ${room.roomId}`}
                 className={`rounded-xl border p-3 text-left transition ${
                   selectedRoomId === room.roomId
                     ? "border-brand/40 bg-brand/10"
