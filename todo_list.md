@@ -2,7 +2,7 @@
 
 > **Project:** GuardianLink Crisis Coordination System  
 > **Stack:** Next.js 16 (App Router) + Tailwind CSS v4 + Firebase + Gemini 3 Flash + Google Maps  
-> **Last Updated:** 2026-04-21
+> **Last Updated:** 2026-04-22
 
 ---
 
@@ -69,34 +69,34 @@
 
 ## Phase 5: Staff Command Center — `/staff`
 
-- [ ] **5.1 Staff Authentication & Layout**
-  - [ ] Staff dashboard layout with sidebar navigation
-  - [ ] Authentication gate (demo mode with bypass)
-  - [ ] Dashboard header with crisis status indicator
-- [ ] **5.2 Gemini Pulse — Incident Feed**
-  - [ ] Incident feed component (scrolling, real-time)
-  - [ ] API route `app/api/incidents/synthesize/route.ts`
-  - [ ] Gemini 3 Flash integration for report synthesis
-  - [ ] Incident cards with severity levels and summaries
-- [ ] **5.3 Occupancy & Safety Heatmap**
-  - [ ] Google Maps with Advanced Markers
-  - [ ] Real-time guest status markers (green/red/grey pulsing)
-  - [ ] Floor selector for multi-level view
-  - [ ] Heatmap overlay for density visualization
-- [ ] **5.4 Critical Alert Broadcast**
-  - [ ] Broadcast message composer
-  - [ ] API route `app/api/broadcast/route.ts`
-  - [ ] FCM integration for push notifications
-  - [ ] Alert history log
-- [ ] **5.5 Danger Zone Management**
-  - [ ] Interactive map tool for marking danger zones
-  - [ ] Danger zone CRUD operations
-  - [ ] Firestore `danger_zones` collection management
-- [ ] **5.6 Incident Management**
-  - [ ] Incident detail view
-  - [ ] Status update controls (investigating, contained, resolved)
-  - [ ] Timeline of events per incident
-- [ ] **GIT COMMIT: `feat: staff command center with AI feed, heatmap, and broadcasts`**
+- [x] **5.1 Staff Authentication & Layout**
+  - [x] Staff dashboard layout with sidebar navigation
+  - [x] Authentication gate (demo mode with bypass)
+  - [x] Dashboard header with crisis status indicator
+- [x] **5.2 Gemini Pulse — Incident Feed**
+  - [x] Incident feed component (scrolling, real-time)
+  - [x] API route `app/api/incidents/synthesize/route.ts`
+  - [x] Gemini 3 Flash integration for report synthesis
+  - [x] Incident cards with severity levels and summaries
+- [x] **5.3 Occupancy & Safety Heatmap**
+  - [x] Google Maps with Advanced Markers
+  - [x] Real-time guest status markers (green/red/grey pulsing)
+  - [x] Floor selector for multi-level view
+  - [x] Heatmap overlay for density visualization
+- [x] **5.4 Critical Alert Broadcast**
+  - [x] Broadcast message composer
+  - [x] API route `app/api/broadcast/route.ts`
+  - [x] FCM integration for push notifications
+  - [x] Alert history log
+- [x] **5.5 Danger Zone Management**
+  - [x] Interactive map tool for marking danger zones
+  - [x] Danger zone CRUD operations
+  - [x] Firestore `danger_zones` collection management
+- [x] **5.6 Incident Management**
+  - [x] Incident detail view
+  - [x] Status update controls (investigating, contained, resolved)
+  - [x] Timeline of events per incident
+- [x] **GIT COMMIT: `feat: staff command center with AI feed, heatmap, and broadcasts`**
 
 ## Phase 6: First Responder Bridge — `/responder`
 
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 35 / ~80 tasks
-- **Current Phase:** Phase 4 — Guest Survival Hub
+- **Completed:** 56 / ~80 tasks
+- **Current Phase:** Phase 6 — First Responder Bridge
