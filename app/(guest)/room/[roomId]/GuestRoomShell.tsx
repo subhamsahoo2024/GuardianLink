@@ -9,6 +9,7 @@ import Card from "@/app/_components/ui/Card";
 import LoadingSkeleton from "@/app/_components/ui/LoadingSkeleton";
 import StatusPulse from "@/app/_components/ui/StatusPulse";
 import SOSButton from "./SOSButton";
+import SOSReportForm from "./SOSReportForm";
 import { useRoomContext } from "./RoomContext";
 
 const instructions = [
@@ -211,10 +212,12 @@ export default function GuestRoomShell() {
                 Multilingual ticker pending
               </Badge>
               <Badge variant="neutral" dot>
-                Media upload pipeline pending
+                Status sync pending
               </Badge>
             </div>
           </Card>
+
+          <SOSReportForm />
 
           <Card variant="glass" padding="sm">
             <div className="flex items-center gap-2 text-sm text-text-secondary">

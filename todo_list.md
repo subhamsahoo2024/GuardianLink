@@ -46,9 +46,9 @@
   - [x] Welcome screen with emergency instructions
 - [ ] **4.2 One-Tap SOS System**
   - [x] SOS button component (large, pulsing, red)
-  - [ ] MediaRecorder integration (audio/video capture)
-  - [ ] SOS report form (text + media)
-  - [ ] API route `app/api/sos/route.ts` to receive reports
+  - [x] MediaRecorder integration (audio/video capture)
+  - [x] SOS report form (text + media)
+  - [x] API route `app/api/sos/route.ts` to receive reports
   - [ ] Integration with Firebase Storage for media uploads
 - [ ] **4.3 Dynamic Safe-Path Navigation**
   - [ ] Google Maps embed with floor plan overlay
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 24 / ~80 tasks
+- **Completed:** 27 / ~80 tasks
 - **Current Phase:** Phase 4 — Guest Survival Hub
