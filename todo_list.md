@@ -163,11 +163,11 @@
 ## Phase 9: PWA & Offline Support
 
 - [x] Web App Manifest (`app/manifest.ts`)
-- [ ] Service Worker (`public/sw.js`)
-- [ ] Offline caching for maps and essential UI
-- [ ] PWA icons (192x192 and 512x512)
-- [ ] Install prompt for mobile devices
-- [ ] **GIT COMMIT: `feat: PWA support with service worker and offline caching`**
+- [x] Service Worker (`public/sw.js`)
+- [x] Offline caching for maps and essential UI
+- [x] PWA icons (192x192 and 512x512)
+- [x] Install prompt for mobile devices
+- [x] **GIT COMMIT: `feat: PWA support with service worker and offline caching`**
 
 ## Phase 10: Polish, Security & Accessibility
 
@@ -207,5 +207,5 @@
 
 ## Progress Summary
 
-- **Completed:** 87 / ~87 tasks
-- **Current Phase:** Phase 9 — PWA & Offline Support
+- **Completed:** 92 / ~92 tasks
+- **Current Phase:** Phase 10 — Polish, Security & Accessibility
