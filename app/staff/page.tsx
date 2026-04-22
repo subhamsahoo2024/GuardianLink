@@ -14,7 +14,7 @@ import {
   ShieldAlert,
   Siren,
 } from "lucide-react";
-import { Loader } from "@googlemaps/js-api-loader";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
@@ -264,13 +264,8 @@ export default function StaffPage() {
 
     async function initMap() {
       try {
-        const loader = new Loader({
-          apiKey,
-          version: "weekly",
-          libraries: ["maps", "marker"],
-        });
-
-        await loader.load();
+        setOptions({ key: apiKey });
+        await Promise.all([importLibrary("maps"), importLibrary("marker")]);
         if (!mounted || !mapRef.current) return;
 
         const g = (window as unknown as { google?: MapAdapter }).google;

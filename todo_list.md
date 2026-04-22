@@ -125,40 +125,40 @@
 
 ## Phase 7: AI Intelligence Layer
 
-- [ ] **7.1 Multimodal Triage**
-  - [ ] API route `app/api/triage/route.ts`
-  - [ ] Gemini 3 Flash video/audio/image analysis
-  - [ ] Hazard classification (fire, flood, structural, medical)
-  - [ ] Severity scoring (1-10)
-- [ ] **7.2 Incident Synthesis**
-  - [ ] Batch report clustering logic
-  - [ ] Gemini prompt engineering for incident summaries
-  - [ ] Deduplication of related reports
-- [ ] **7.3 Privacy-First AI**
-  - [ ] PII filtering in all Gemini prompts
-  - [ ] Audit logging for AI decisions
-- [ ] **GIT COMMIT: `feat: AI intelligence layer with triage, synthesis, and privacy`**
+- [x] **7.1 Multimodal Triage**
+  - [x] API route `app/api/triage/route.ts`
+  - [x] Gemini 3 Flash video/audio/image analysis
+  - [x] Hazard classification (fire, flood, structural, medical)
+  - [x] Severity scoring (1-10)
+- [x] **7.2 Incident Synthesis**
+  - [x] Batch report clustering logic
+  - [x] Gemini prompt engineering for incident summaries
+  - [x] Deduplication of related reports
+- [x] **7.3 Privacy-First AI**
+  - [x] PII filtering in all Gemini prompts
+  - [x] Audit logging for AI decisions
+- [x] **GIT COMMIT: `feat: AI intelligence layer with triage, synthesis, and privacy`**
 
 ## Phase 8: Real-time Engine (Firebase)
 
-- [ ] **8.1 Firestore Schema & Collections**
-  - [ ] `hotels` collection
-  - [ ] `rooms` collection
-  - [ ] `guests` collection (active sessions)
-  - [ ] `sos_reports` collection
-  - [ ] `incidents` collection
-  - [ ] `danger_zones` collection
-  - [ ] `broadcasts` collection
-- [ ] **8.2 Real-time Listeners**
-  - [ ] Guest status stream (onSnapshot)
-  - [ ] Incident feed stream
-  - [ ] Danger zone updates stream
-  - [ ] Broadcast alerts stream
-- [ ] **8.3 Firebase Cloud Messaging**
-  - [ ] FCM setup for staff notifications
-  - [ ] High-priority alert configuration
-  - [ ] Custom notification sounds
-- [ ] **GIT COMMIT: `feat: Firebase real-time engine with Firestore and FCM`**
+- [x] **8.1 Firestore Schema & Collections**
+  - [x] `hotels` collection
+  - [x] `rooms` collection
+  - [x] `guests` collection (active sessions)
+  - [x] `sos_reports` collection
+  - [x] `incidents` collection
+  - [x] `danger_zones` collection
+  - [x] `broadcasts` collection
+- [x] **8.2 Real-time Listeners**
+  - [x] Guest status stream (onSnapshot)
+  - [x] Incident feed stream
+  - [x] Danger zone updates stream
+  - [x] Broadcast alerts stream
+- [x] **8.3 Firebase Cloud Messaging**
+  - [x] FCM setup for staff notifications
+  - [x] High-priority alert configuration
+  - [x] Custom notification sounds
+- [x] **GIT COMMIT: `feat: Firebase real-time engine with Firestore and FCM`**
 
 ## Phase 9: PWA & Offline Support
 
@@ -195,6 +195,9 @@
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`          | Google Maps JavaScript API               | Client     |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`             | VAPID public key for push notifications  | Client     |
 | `GOOGLE_GEMINI_API_KEY`                    | Gemini 3 Flash API key                   | Server     |
+| `GOOGLE_GEMINI_LIVE_API_KEY`               | Gemini Live API key                      | Server     |
+| `GEMINI_LIVE_WS_URL`                       | Gemini Live WebSocket endpoint           | Server     |
+| `NEXT_PUBLIC_GEMINI_LIVE_WS_URL`           | Public WebSocket endpoint for bridge     | Client     |
 | `GOOGLE_CLOUD_TRANSLATION_API_KEY`         | Cloud Translation API                    | Server     |
 | `VAPID_PRIVATE_KEY`                        | VAPID private key for push notifications | Server     |
 | `FIREBASE_ADMIN_CLIENT_EMAIL`              | Firebase Admin SDK                       | Server     |
@@ -204,5 +207,5 @@
 
 ## Progress Summary
 
-- **Completed:** 73 / ~80 tasks
-- **Current Phase:** Phase 7 — AI Intelligence Layer
+- **Completed:** 87 / ~87 tasks
+- **Current Phase:** Phase 9 — PWA & Offline Support

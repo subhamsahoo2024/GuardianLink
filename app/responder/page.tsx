@@ -17,7 +17,7 @@ import {
   TabletSmartphone,
   TriangleAlert,
 } from "lucide-react";
-import { Loader } from "@googlemaps/js-api-loader";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
@@ -266,13 +266,8 @@ export default function ResponderPage() {
 
     async function initMap() {
       try {
-        const loader = new Loader({
-          apiKey,
-          version: "weekly",
-          libraries: ["maps"],
-        });
-
-        await loader.load();
+        setOptions({ key: apiKey });
+        await importLibrary("maps");
         if (!mounted || !mapRef.current) return;
 
         const g = (window as unknown as { google?: MapAdapter }).google;
@@ -294,13 +289,14 @@ export default function ResponderPage() {
             ) => void;
           }
         ).addListener("click", (event) => {
-          if (!event.latLng) return;
+          const latLng = event.latLng;
+          if (!latLng) return;
           setMessages((previous) => [
             ...previous,
             {
               id: `local-${Date.now()}`,
               speaker: "system",
-              text: `Map ping ${event.latLng.lat().toFixed(5)}, ${event.latLng.lng().toFixed(5)}`,
+              text: `Map ping ${latLng.lat().toFixed(5)}, ${latLng.lng().toFixed(5)}`,
               createdAt: new Date().toISOString(),
               translated: false,
             },
@@ -518,8 +514,9 @@ export default function ResponderPage() {
 
   async function toggleAudioBridge() {
     if (recordingAudio) {
-      if (mediaRecorderRef.current?.state !== "inactive") {
-        mediaRecorderRef.current.stop();
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop();
       }
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
@@ -603,8 +600,9 @@ export default function ResponderPage() {
 
       const payload = (await response.json()) as { messages?: BridgeMessage[] };
       setBridgeText("");
-      if (payload.messages && payload.messages.length > 0) {
-        setMessages((previous) => [...previous, ...payload.messages]);
+      const nextMessages = payload.messages || [];
+      if (nextMessages.length > 0) {
+        setMessages((previous) => [...previous, ...nextMessages]);
       }
     } finally {
       setBridgeBusy(false);
@@ -724,7 +722,7 @@ export default function ResponderPage() {
             <p className="text-sm text-text-muted">Rooms under verification.</p>
           </Card>
           <Card variant="glass">
-            <StatusPulse status="info" label="Live Sessions" />
+            <StatusPulse status="warning" label="Live Sessions" />
             <div className="mt-3 text-2xl font-bold text-brand-light">
               {triage?.activeSessions ?? 0}
             </div>
