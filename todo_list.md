@@ -62,9 +62,9 @@
   - [ ] Translation API route `app/api/translate/route.ts`
   - [ ] Real-time translated alerts display
 - [ ] **4.5 Guest Status Tracking**
-  - [ ] "I am Safe" button (updates status to evacuated)
-  - [ ] Guest status state management
-  - [ ] Firestore status sync
+  - [x] "I am Safe" button (updates status to evacuated)
+  - [x] Guest status state management
+  - [x] Firestore status sync
 - [ ] **GIT COMMIT: `feat: guest PWA with SOS, navigation, and multilingual alerts`**
 
 ## Phase 5: Staff Command Center — `/staff`
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 28 / ~80 tasks
+- **Completed:** 31 / ~80 tasks
 - **Current Phase:** Phase 4 — Guest Survival Hub

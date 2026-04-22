@@ -19,7 +19,8 @@ const instructions = [
 ];
 
 export default function GuestRoomShell() {
-  const { roomId, floor, hotelName, status, setStatus } = useRoomContext();
+  const { roomId, floor, hotelName, status, syncState, setStatus } =
+    useRoomContext();
 
   const statusLabel =
     status === "needs-help"
@@ -34,6 +35,24 @@ export default function GuestRoomShell() {
       : status === "evacuated"
         ? "safe"
         : "warning";
+
+  const syncLabel =
+    syncState === "live"
+      ? "Firestore live"
+      : syncState === "syncing"
+        ? "Syncing..."
+        : syncState === "error"
+          ? "Sync error"
+          : "Idle";
+
+  const syncBadgeVariant =
+    syncState === "live"
+      ? "safe"
+      : syncState === "syncing"
+        ? "warning"
+        : syncState === "error"
+          ? "danger"
+          : "neutral";
 
   return (
     <div className="flex-1 px-4 py-5 sm:px-6 lg:px-8">
@@ -211,8 +230,12 @@ export default function GuestRoomShell() {
               <Badge variant="warning" dot pulse>
                 Multilingual ticker pending
               </Badge>
-              <Badge variant="neutral" dot>
-                Status sync pending
+              <Badge
+                variant={syncBadgeVariant}
+                dot
+                pulse={syncState === "syncing"}
+              >
+                {syncLabel}
               </Badge>
             </div>
           </Card>
