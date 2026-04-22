@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MapPinned, ShieldAlert, Siren, Waves } from "lucide-react";
+import { ArrowLeft, MapPinned, ShieldAlert, Siren } from "lucide-react";
 import AlertBanner from "@/app/_components/ui/AlertBanner";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
@@ -10,6 +10,7 @@ import LoadingSkeleton from "@/app/_components/ui/LoadingSkeleton";
 import StatusPulse from "@/app/_components/ui/StatusPulse";
 import SOSButton from "./SOSButton";
 import SOSReportForm from "./SOSReportForm";
+import MultilingualEmergencyTicker from "./MultilingualEmergencyTicker";
 import { useRoomContext } from "./RoomContext";
 
 const instructions = [
@@ -242,16 +243,7 @@ export default function GuestRoomShell() {
 
           <SOSReportForm />
 
-          <Card variant="glass" padding="sm">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Waves size={16} className="text-brand-light" />
-              Emergency ticker placeholder
-            </div>
-            <p className="mt-3 text-sm text-text-muted">
-              Translation and live broadcasts will appear here once the API
-              route is built.
-            </p>
-          </Card>
+          <MultilingualEmergencyTicker />
         </div>
       </div>
     </div>

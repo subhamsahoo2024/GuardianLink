@@ -57,10 +57,10 @@
   - [ ] Pathfinding logic (A\* or waypoint-based routing)
   - [ ] Real-time path updates when danger zones change
 - [ ] **4.4 Multilingual Emergency Ticker**
-  - [ ] Emergency instruction ticker component
-  - [ ] Browser language detection (`navigator.language`)
-  - [ ] Translation API route `app/api/translate/route.ts`
-  - [ ] Real-time translated alerts display
+  - [x] Emergency instruction ticker component
+  - [x] Browser language detection (`navigator.language`)
+  - [x] Translation API route `app/api/translate/route.ts`
+  - [x] Real-time translated alerts display
 - [ ] **4.5 Guest Status Tracking**
   - [x] "I am Safe" button (updates status to evacuated)
   - [x] Guest status state management
@@ -204,5 +204,5 @@
 
 ## Progress Summary
 
-- **Completed:** 31 / ~80 tasks
+- **Completed:** 35 / ~80 tasks
 - **Current Phase:** Phase 4 — Guest Survival Hub
