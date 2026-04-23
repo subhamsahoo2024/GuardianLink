@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ GuardianLink (Ariadne)
 
-## Getting Started
+### _Next-Gen Crisis Coordination for the Hospitality Industry_
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📽️ Demo Video
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+_[Insert YouTube/Vimeo Link Here]_
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> **Top 1% Tip:** Your video should highlight the "Zero-Install" PWA and the Gemini AI triage in action.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📌 Problem Statement
 
-To learn more about Next.js, take a look at the following resources:
+Global hospitality venues face high-stakes emergencies where information is siloed. In a crisis, guests lack local apps, staff are overwhelmed by duplicate reports, and first responders are "blind" once they enter large, complex buildings.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 💡 The Solution
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**GuardianLink** is a decentralized, bi-directional emergency mesh.
 
-## Deploy on Vercel
+- **Guests:** Use a Zero-Install PWA for real-time, AI-guided evacuation.
+- **Staff:** Utilize a high-concurrency Command Center to filter chaos into action.
+- **Responders:** Access "X-Ray" vision through indoor heatmaps and automated triage.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Technical Architecture
+
+GuardianLink is built on a unified **TypeScript** stack, leveraging the best of Google’s 2026 infrastructure for sub-second latency and edge intelligence.
+
+### **The "Top 1%" Google Stack**
+
+- **Frontend:** Next.js 16 (App Router) + Tailwind CSS v4.
+- **Mobile Shell:** Capacitor 7.0 (Native Staff Alerts) & PWA (Guest Interface).
+- **Intelligence:** **Gemini 3 Flash** for multimodal triage and real-time situational synthesis.
+- **Communication:** **Gemini Live API** for voice-to-voice multilingual translation.
+- **Database:** **Cloud Firestore** for real-time state synchronization.
+- **Maps:** **Google Maps Platform** with Indoor Level Routing and Advanced Markers.
+
+---
+
+## 🌟 Key Features
+
+- **AI Chaos Filtering:** Gemini 3 Flash clusters hundreds of guest reports into a single, summarized "Incident Entity."
+- **Dynamic Safe-Pathing:** Real-time evacuation routes that update dynamically to avoid hazard zones detected by sensors or reported by staff.
+- **Ambient Translator:** A voice-to-voice bridge using Gemini Live, allowing non-English speaking guests to communicate directly with local responders.
+- **Digital Triage Heatmap:** Passive tracking of devices to identify stationary "at-risk" individuals versus those moving toward safety.
+
+---
+
+## 🏗️ Getting Started
+
+### **Prerequisites**
+
+- Node.js v20+
+- Firebase Account
+- Google Cloud Console Project (with Vertex AI enabled)
+
+### **Installation**
+
+1.  **Clone the Repo:**
+
+    ```bash
+    git clone https://github.com/your-username/guardian-link.git
+    cd guardian-link
+    ```
+
+2.  **Install Dependencies:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup:**
+    Create a `.env.local` file and populate it with your keys (see `implementation.md` for details).
+
+4.  **Run Development Server:**
+
+    ```bash
+    npm run dev
+    ```
+
+---
+
+## 🇺🇳 SDG Alignment
+
+Our project is built to directly address the United Nations Sustainable Development Goals:
+
+- **SDG 3 (Good Health & Well-being):** Drastically reducing fatalities through optimized emergency response.
+- **SDG 11 (Sustainable Cities & Communities):** Strengthening disaster resilience in urban tourism hubs.
+
+---
+
+## 👥 The Team
+
+- **Subham Sahoo S** - _Lead Developer_
+- **Sriram B** - _AI Engineer_
+- **Thejas SB** - _UI/UX & GIS_
+- **Mahathi M** - _Backend Developer_
