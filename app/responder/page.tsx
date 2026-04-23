@@ -17,7 +17,6 @@ import {
   TabletSmartphone,
   TriangleAlert,
 } from "lucide-react";
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
@@ -36,74 +35,16 @@ type OverlayToggle = {
   gas: boolean;
   electrical: boolean;
 };
-
-type MapClickEvent = { latLng?: { lat: () => number; lng: () => number } };
-
-type MapAdapter = {
-  maps: {
-    Map: new (
-      element: HTMLElement,
-      options: {
-        center: { lat: number; lng: number };
-        zoom: number;
-        mapTypeId: string;
-        disableDefaultUI: boolean;
-        clickableIcons: boolean;
-      },
-    ) => {
-      addListener: (
-        event: string,
-        handler: (evt: MapClickEvent) => void,
-      ) => void;
-    };
-    Marker: new (options: {
-      map: unknown;
-      position: { lat: number; lng: number };
-      icon?: {
-        path: number;
-        fillColor: string;
-        fillOpacity: number;
-        strokeColor: string;
-        strokeWeight: number;
-        scale: number;
-      };
-      label?: string;
-      title?: string;
-    }) => { setMap: (map: null) => void };
-    Circle: new (options: {
-      map: unknown;
-      center: { lat: number; lng: number };
-      radius: number;
-      fillColor: string;
-      fillOpacity: number;
-      strokeOpacity: number;
-      strokeWeight?: number;
-      strokeColor?: string;
-    }) => { setMap: (map: null) => void };
-    Polyline: new (options: {
-      map: unknown;
-      path: Array<{ lat: number; lng: number }>;
-      strokeColor: string;
-      strokeOpacity: number;
-      strokeWeight: number;
-    }) => { setMap: (map: null) => void };
-    Polygon: new (options: {
-      map: unknown;
-      paths: Array<{ lat: number; lng: number }>;
-      fillColor: string;
-      fillOpacity: number;
-      strokeColor: string;
-      strokeOpacity: number;
-      strokeWeight: number;
-    }) => { setMap: (map: null) => void };
-    SymbolPath: { CIRCLE: number };
-  };
-};
+type LeafletModule = typeof import("leaflet");
+type RemovableLayer = { remove: () => void };
 
 const responderBypassEnabled =
   process.env.NEXT_PUBLIC_RESPONDER_DEMO_BYPASS !== "false";
 const responderPasscode =
   process.env.NEXT_PUBLIC_RESPONDER_DEMO_PASSCODE || "guardian-responder-demo";
+const osmTileUrl =
+  process.env.NEXT_PUBLIC_OSM_TILE_URL ||
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 function roomStatusVariant(status: RoomRecord["status"]) {
   if (status === "trapped") return "danger" as const;
@@ -162,7 +103,8 @@ export default function ResponderPage() {
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<unknown>(null);
-  const mapObjectsRef = useRef<Array<{ setMap: (map: null) => void }>>([]);
+  const leafletModuleRef = useRef<LeafletModule | null>(null);
+  const mapObjectsRef = useRef<RemovableLayer[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -259,44 +201,42 @@ export default function ResponderPage() {
 
   useEffect(() => {
     if (!authenticated || !mapRef.current) return;
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return;
 
     let mounted = true;
 
     async function initMap() {
       try {
-        setOptions({ key: apiKey });
-        await importLibrary("maps");
+        const L = await import("leaflet");
+        leafletModuleRef.current = L;
         if (!mounted || !mapRef.current) return;
 
-        const g = (window as unknown as { google?: MapAdapter }).google;
-        if (!g?.maps) return;
-
-        mapInstanceRef.current = new g.maps.Map(mapRef.current, {
-          center: { lat: 40.7582, lng: -73.9855 },
+        mapInstanceRef.current = L.map(mapRef.current, {
+          center: [40.7582, -73.9855],
           zoom: 19,
-          mapTypeId: "satellite",
-          disableDefaultUI: true,
-          clickableIcons: false,
+          zoomControl: false,
         });
+
+        L.tileLayer(osmTileUrl, {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 20,
+        }).addTo(mapInstanceRef.current as { addLayer: (layer: unknown) => void });
 
         (
           mapInstanceRef.current as {
-            addListener: (
+            on: (
               event: string,
-              handler: (evt: MapClickEvent) => void,
+              handler: (evt: { latlng?: { lat: number; lng: number } }) => void,
             ) => void;
           }
-        ).addListener("click", (event) => {
-          const latLng = event.latLng;
+        ).on("click", (event) => {
+          const latLng = event.latlng;
           if (!latLng) return;
           setMessages((previous) => [
             ...previous,
             {
               id: `local-${Date.now()}`,
               speaker: "system",
-              text: `Map ping ${latLng.lat().toFixed(5)}, ${latLng.lng().toFixed(5)}`,
+              text: `Map ping ${latLng.lat.toFixed(5)}, ${latLng.lng.toFixed(5)}`,
               createdAt: new Date().toISOString(),
               translated: false,
             },
@@ -311,52 +251,60 @@ export default function ResponderPage() {
 
     return () => {
       mounted = false;
+      mapObjectsRef.current.forEach((shape) => shape.remove());
+      mapObjectsRef.current = [];
+      const map = mapInstanceRef.current as { remove?: () => void } | null;
+      map?.remove?.();
+      mapInstanceRef.current = null;
+      leafletModuleRef.current = null;
     };
   }, [authenticated]);
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
+    const L = leafletModuleRef.current;
+    if (!L) return;
 
-    const g = (window as unknown as { google?: MapAdapter }).google;
-    if (!g?.maps) return;
+    const map = mapInstanceRef.current as {
+      addLayer: (layer: unknown) => void;
+    };
 
-    mapObjectsRef.current.forEach((shape) => shape.setMap(null));
+    mapObjectsRef.current.forEach((shape) => shape.remove());
     mapObjectsRef.current = [];
 
     rooms.forEach((room) => {
       const coordinate = roomCoordinate(room.roomId, room.floor);
-      const marker = new g.maps.Marker({
-        map: mapInstanceRef.current,
-        position: coordinate,
-        label: room.roomId,
-        icon: {
-          path: g.maps.SymbolPath.CIRCLE,
-          fillColor:
-            room.status === "trapped"
-              ? "#ef4444"
-              : room.status === "no_response"
-                ? "#f59e0b"
-                : room.status === "evacuated"
-                  ? "#10b981"
-                  : "#64748b",
-          fillOpacity: 0.95,
-          strokeColor: "#ffffff",
-          strokeWeight: 1,
-          scale: room.status === "trapped" ? 9 : 7,
-        },
-        title: `Room ${room.roomId}`,
+      const color =
+        room.status === "trapped"
+          ? "#ef4444"
+          : room.status === "no_response"
+            ? "#f59e0b"
+            : room.status === "evacuated"
+              ? "#10b981"
+              : "#64748b";
+      const marker = L.circleMarker([coordinate.lat, coordinate.lng], {
+        radius: room.status === "trapped" ? 9 : 7,
+        color: "#ffffff",
+        weight: 1,
+        fillColor: color,
+        fillOpacity: 0.95,
+      }).addTo(map);
+      marker.bindTooltip(room.roomId, {
+        permanent: true,
+        direction: "top",
+        offset: [0, -8],
+        opacity: 0.95,
       });
       mapObjectsRef.current.push(marker);
 
       if (room.status === "trapped" || room.status === "no_response") {
-        const pulse = new g.maps.Circle({
-          map: mapInstanceRef.current,
-          center: coordinate,
+        const pulse = L.circle([coordinate.lat, coordinate.lng], {
           radius: room.status === "trapped" ? 14 : 11,
+          color: room.status === "trapped" ? "#ef4444" : "#f59e0b",
+          weight: 0,
           fillColor: room.status === "trapped" ? "#ef4444" : "#f59e0b",
           fillOpacity: 0.2,
-          strokeOpacity: 0,
-        });
+        }).addTo(map);
         mapObjectsRef.current.push(pulse);
       }
     });
@@ -366,52 +314,46 @@ export default function ResponderPage() {
       .forEach((layer) => {
         layer.geoJson.features.forEach((feature) => {
           if (feature.geometry.type === "Point") {
-            const marker = new g.maps.Marker({
-              map: mapInstanceRef.current,
-              position: {
-                lng: feature.geometry.coordinates[0],
-                lat: feature.geometry.coordinates[1],
-              },
-              icon: {
-                path: g.maps.SymbolPath.CIRCLE,
+            const marker = L.circleMarker(
+              [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
+              {
+                radius: 6,
+                color: "#0f172a",
+                weight: 1,
                 fillColor: layer.color,
                 fillOpacity: 1,
-                strokeColor: "#0f172a",
-                strokeWeight: 1,
-                scale: 6,
               },
-              title: feature.properties.label,
+            ).addTo(map);
+            marker.bindTooltip(feature.properties.label, {
+              permanent: false,
+              opacity: 0.95,
             });
             mapObjectsRef.current.push(marker);
           }
 
           if (feature.geometry.type === "LineString") {
-            const polyline = new g.maps.Polyline({
-              map: mapInstanceRef.current,
-              path: feature.geometry.coordinates.map(([lng, lat]) => ({
-                lat,
-                lng,
-              })),
-              strokeColor: layer.color,
-              strokeOpacity: 0.95,
-              strokeWeight: 4,
-            });
+            const polyline = L.polyline(
+              feature.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+              {
+                color: layer.color,
+                opacity: 0.95,
+                weight: 4,
+              },
+            ).addTo(map);
             mapObjectsRef.current.push(polyline);
           }
 
           if (feature.geometry.type === "Polygon") {
-            const polygon = new g.maps.Polygon({
-              map: mapInstanceRef.current,
-              paths: feature.geometry.coordinates[0].map(([lng, lat]) => ({
-                lat,
-                lng,
-              })),
-              fillColor: layer.color,
-              fillOpacity: 0.2,
-              strokeColor: layer.color,
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-            });
+            const polygon = L.polygon(
+              feature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]),
+              {
+                fillColor: layer.color,
+                fillOpacity: 0.2,
+                color: layer.color,
+                opacity: 0.8,
+                weight: 2,
+              },
+            ).addTo(map);
             mapObjectsRef.current.push(polygon);
           }
         });
@@ -793,14 +735,9 @@ export default function ResponderPage() {
               <div ref={mapRef} className="h-full w-full" />
             </div>
 
-            {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-              <p className="text-sm text-warning-light">
-                Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable live tactical map.
-              </p>
-            ) : null}
             {mapInitFailed ? (
               <p className="text-sm text-warning-light">
-                Map failed to initialize. Check API restrictions and billing.
+                Map failed to initialize. Check network and tile access.
               </p>
             ) : null}
           </Card>

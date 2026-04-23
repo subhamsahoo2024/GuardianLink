@@ -37,7 +37,7 @@ GuardianLink is built on a unified **TypeScript** stack, leveraging the best of 
 - **Intelligence:** **Gemini 3 Flash** for multimodal triage and real-time situational synthesis.
 - **Communication:** **Gemini Live API** for voice-to-voice multilingual translation.
 - **Database:** **Cloud Firestore** for real-time state synchronization.
-- **Maps:** **Google Maps Platform** with Indoor Level Routing and Advanced Markers.
+- **Maps:** **OpenStreetMap + Leaflet** with indoor overlays and custom routing.
 
 ---
 

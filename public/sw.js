@@ -14,8 +14,10 @@ const APP_SHELL_URLS = [
 ];
 
 const MAPS_MATCHERS = [
-  "https://maps.googleapis.com/",
-  "https://maps.gstatic.com/",
+  "https://tile.openstreetmap.org/",
+  "https://a.tile.openstreetmap.org/",
+  "https://b.tile.openstreetmap.org/",
+  "https://c.tile.openstreetmap.org/",
   "https://fonts.gstatic.com/",
 ];
 

@@ -402,7 +402,7 @@ function TechStackSection() {
     { name: "Next.js 16", detail: "App Router + RSC" },
     { name: "Gemini AI", detail: "Multimodal Triage" },
     { name: "Firebase", detail: "Real-time Engine" },
-    { name: "Google Maps", detail: "Indoor Navigation" },
+    { name: "OpenStreetMap", detail: "Indoor Navigation" },
     { name: "Tailwind v4", detail: "Design System" },
     { name: "Web Push", detail: "Critical Alerts" },
   ];

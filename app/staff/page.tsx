@@ -14,7 +14,6 @@ import {
   ShieldAlert,
   Siren,
 } from "lucide-react";
-import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
@@ -39,6 +38,9 @@ type DashboardSection =
 const demoBypassEnabled = process.env.NEXT_PUBLIC_STAFF_DEMO_BYPASS !== "false";
 const demoPasscode =
   process.env.NEXT_PUBLIC_STAFF_DEMO_PASSCODE || "guardian-staff-demo";
+const osmTileUrl =
+  process.env.NEXT_PUBLIC_OSM_TILE_URL ||
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 const sectionLabels: Array<{ key: DashboardSection; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -83,57 +85,8 @@ function priorityVariant(
 }
 
 export default function StaffPage() {
-  type MapClickEvent = { latLng?: { lat: () => number; lng: () => number } };
-  type MapAdapter = {
-    maps: {
-      Map: new (
-        el: HTMLElement,
-        opts: {
-          center: { lat: number; lng: number };
-          zoom: number;
-          mapTypeId: string;
-          disableDefaultUI: boolean;
-          clickableIcons: boolean;
-        },
-      ) => {
-        addListener: (
-          event: string,
-          handler: (evt: MapClickEvent) => void,
-        ) => void;
-      };
-      Marker: new (opts: {
-        map: unknown;
-        position: { lat: number; lng: number };
-        label: string;
-        icon: {
-          path: number;
-          fillColor: string;
-          fillOpacity: number;
-          strokeWeight: number;
-          strokeColor: string;
-          scale: number;
-        };
-      }) => { setMap: (map: null) => void };
-      Circle: new (opts: {
-        map: unknown;
-        center: { lat: number; lng: number };
-        radius: number;
-        fillColor: string;
-        fillOpacity: number;
-        strokeOpacity?: number;
-        strokeColor?: string;
-        strokeWeight?: number;
-      }) => { setMap: (map: null) => void };
-      SymbolPath: { CIRCLE: number };
-      marker?: {
-        AdvancedMarkerElement?: new (opts: {
-          map: unknown;
-          position: { lat: number; lng: number };
-          content: HTMLElement;
-        }) => { map: unknown };
-      };
-    };
-  };
+  type LeafletModule = typeof import("leaflet");
+  type RemovableLayer = { remove: () => void };
 
   const [authenticated, setAuthenticated] = useState(demoBypassEnabled);
   const [passcodeInput, setPasscodeInput] = useState("");
@@ -171,7 +124,8 @@ export default function StaffPage() {
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<unknown>(null);
-  const mapDrawnObjectsRef = useRef<Array<{ setMap: (map: null) => void }>>([]);
+  const leafletModuleRef = useRef<LeafletModule | null>(null);
+  const mapDrawnObjectsRef = useRef<RemovableLayer[]>([]);
 
   const selectedIncident = useMemo(
     () =>
@@ -255,39 +209,36 @@ export default function StaffPage() {
 
   useEffect(() => {
     if (!authenticated || !mapRef.current) return;
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      return;
-    }
 
     let mounted = true;
 
     async function initMap() {
       try {
-        setOptions({ key: apiKey });
-        await Promise.all([importLibrary("maps"), importLibrary("marker")]);
+        const L = await import("leaflet");
+        leafletModuleRef.current = L;
         if (!mounted || !mapRef.current) return;
 
-        const g = (window as unknown as { google?: MapAdapter }).google;
-        if (!g?.maps) return;
-        mapInstanceRef.current = new g.maps.Map(mapRef.current, {
-          center: { lat: 40.7582, lng: -73.9855 },
+        mapInstanceRef.current = L.map(mapRef.current, {
+          center: [40.7582, -73.9855],
           zoom: 19,
-          mapTypeId: "roadmap",
-          disableDefaultUI: true,
-          clickableIcons: false,
+          zoomControl: false,
         });
+
+        L.tileLayer(osmTileUrl, {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 20,
+        }).addTo(mapInstanceRef.current as { addLayer: (layer: unknown) => void });
 
         (
           mapInstanceRef.current as {
-            addListener: (
+            on: (
               event: string,
-              handler: (evt: MapClickEvent) => void,
+              handler: (evt: { latlng?: { lat: number; lng: number } }) => void,
             ) => void;
           }
-        ).addListener("click", (evt) => {
-          if (!evt.latLng) return;
-          setClickedPoint({ lat: evt.latLng.lat(), lng: evt.latLng.lng() });
+        ).on("click", (evt) => {
+          if (!evt.latlng) return;
+          setClickedPoint({ lat: evt.latlng.lat, lng: evt.latlng.lng });
           setActiveSection("danger-zones");
         });
       } catch {
@@ -299,15 +250,25 @@ export default function StaffPage() {
 
     return () => {
       mounted = false;
+      mapDrawnObjectsRef.current.forEach((layer) => layer.remove());
+      mapDrawnObjectsRef.current = [];
+      const map = mapInstanceRef.current as { remove?: () => void } | null;
+      map?.remove?.();
+      mapInstanceRef.current = null;
+      leafletModuleRef.current = null;
     };
   }, [authenticated]);
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
-    const g = (window as unknown as { google?: MapAdapter }).google;
-    if (!g?.maps) return;
+    const L = leafletModuleRef.current;
+    if (!L) return;
 
-    mapDrawnObjectsRef.current.forEach((item) => item.setMap(null));
+    const map = mapInstanceRef.current as {
+      addLayer: (layer: unknown) => void;
+    };
+
+    mapDrawnObjectsRef.current.forEach((item) => item.remove());
     mapDrawnObjectsRef.current = [];
 
     const floorGuests = guests.filter((guest) => guest.floor === selectedFloor);
@@ -316,64 +277,40 @@ export default function StaffPage() {
     );
 
     floorGuests.forEach((guest) => {
-      const advancedMarkerClass = g.maps.marker?.AdvancedMarkerElement;
-      if (advancedMarkerClass) {
-        const pin = document.createElement("div");
-        pin.className =
-          "rounded-full border border-white/50 px-2 py-1 text-xs font-bold text-white";
-        pin.style.backgroundColor = guestColor(guest.status);
-        pin.innerText = guest.roomId;
-
-        const marker = new advancedMarkerClass({
-          map: mapInstanceRef.current,
-          position: { lat: guest.lat, lng: guest.lng },
-          content: pin,
-        });
-
-        mapDrawnObjectsRef.current.push({
-          setMap: (map: null) => {
-            marker.map = map;
-          },
-        });
-      } else {
-        const marker = new g.maps.Marker({
-          map: mapInstanceRef.current,
-          position: { lat: guest.lat, lng: guest.lng },
-          label: guest.roomId,
-          icon: {
-            path: g.maps.SymbolPath.CIRCLE,
-            fillColor: guestColor(guest.status),
-            fillOpacity: 1,
-            strokeWeight: 1,
-            strokeColor: "#ffffff",
-            scale: 8,
-          },
-        });
-        mapDrawnObjectsRef.current.push(marker);
-      }
-
-      const halo = new g.maps.Circle({
-        map: mapInstanceRef.current,
-        center: { lat: guest.lat, lng: guest.lng },
+      const marker = L.circleMarker([guest.lat, guest.lng], {
         radius: 8,
+        color: "#ffffff",
+        weight: 1,
+        fillColor: guestColor(guest.status),
+        fillOpacity: 1,
+      }).addTo(map);
+      marker.bindTooltip(guest.roomId, {
+        permanent: true,
+        direction: "top",
+        offset: [0, -8],
+        opacity: 0.95,
+      });
+      mapDrawnObjectsRef.current.push(marker);
+
+      const halo = L.circle([guest.lat, guest.lng], {
+        radius: 8,
+        color: guestColor(guest.status),
+        weight: 0,
         fillColor: guestColor(guest.status),
         fillOpacity: 0.15,
-        strokeOpacity: 0,
-      });
+      }).addTo(map);
       mapDrawnObjectsRef.current.push(halo);
     });
 
     floorZones.forEach((zone) => {
-      const dangerCircle = new g.maps.Circle({
-        map: mapInstanceRef.current,
-        center: zone.center,
+      const dangerCircle = L.circle([zone.center.lat, zone.center.lng], {
         radius: zone.radiusMeters,
+        color: "#fca5a5",
+        opacity: 0.95,
+        weight: 1,
         fillColor: zone.severity === "critical" ? "#dc2626" : "#ef4444",
         fillOpacity: 0.23,
-        strokeColor: "#fca5a5",
-        strokeOpacity: 0.95,
-        strokeWeight: 1,
-      });
+      }).addTo(map);
       mapDrawnObjectsRef.current.push(dangerCircle);
     });
   }, [dangerZones, guests, selectedFloor]);
@@ -749,16 +686,9 @@ export default function StaffPage() {
                 <div className="h-80 overflow-hidden rounded-2xl border border-border bg-surface">
                   <div ref={mapRef} className="h-full w-full" />
                 </div>
-                {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
-                  <p className="text-sm text-warning-light">
-                    Google Maps key missing. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-                    to enable live map.
-                  </p>
-                ) : null}
                 {mapInitFailed ? (
                   <p className="text-sm text-warning-light">
-                    Map failed to initialize. Check API restrictions and
-                    billing.
+                    Map failed to initialize. Check network and tile access.
                   </p>
                 ) : null}
 

@@ -37,7 +37,7 @@ Here is the complete end-to-end flow of **GuardianLink**, divided into the **Use
 | **3. Ingestion** | Guest uploads video/audio distress signal. | **Firebase Storage + Cloud Functions** |
 | **4. Triage** | Multimodal analysis of the distress signal. | **Gemini 3 Flash (Vertex AI)** |
 | **5. Sync** | AI summary & location pushed to Dashboards. | **Firestore Real-time Streams** |
-| **6. Navigation** | Dynamic pathing calculated based on hazard pins. | **Google Maps API + Custom Pathfinding** |
+| **6. Navigation** | Dynamic pathing calculated based on hazard pins. | **OpenStreetMap + Leaflet + Custom Pathfinding** |
 | **7. Bridge** | Voice-to-voice translation established. | **Gemini Live API (WebSockets)** |
 
 ---

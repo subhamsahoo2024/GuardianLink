@@ -25,7 +25,7 @@ AegisNode replaces chaos with a **Three-Tier Mesh System**:
 ## 🚀 Key Features
 
 ### 1. Dynamic "Safe-Path" Navigation
-Unlike static exit signs, AegisNode uses Google Maps Indoor API to draw a live path on the guest's phone. If sensors detect danger in a specific hallway, the AI automatically reroutes guests to a safer, alternative exit.
+Unlike static exit signs, AegisNode uses Leaflet with OpenStreetMap and indoor overlays to draw a live path on the guest's phone. If sensors detect danger in a specific hallway, the AI automatically reroutes guests to a safer, alternative exit.
 
 ### 2. Gemini AI "Chaos Filter"
 Our backend uses **Gemini 3 Flash** to analyze hundreds of incoming reports (text, audio, and video). It merges duplicate alerts into one "Incident Entity" and provides staff with a 3-sentence summary of what is actually happening.
@@ -45,7 +45,7 @@ AegisNode tracks the "safe/unsafe" status of all active devices. Hotel security 
 - **Mobile Layer:** Capacitor (for native staff alerts) and PWA (for zero-install guest access).
 - **Intelligence:** Google Gemini 3 Flash (Multimodal analysis & translation).
 - **Real-time Engine:** Firebase (Firestore & Cloud Messaging) for <100ms sync.
-- **Location:** Google Maps Platform (Advanced Markers & Indoor Level Routing).
+- **Location:** OpenStreetMap + Leaflet (custom markers, overlays, and indoor routing).
 
 ---
 

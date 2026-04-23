@@ -10,8 +10,8 @@ This document outlines the technical execution of the AegisNode crisis coordinat
 ### Key Features & Implementation
 * **Dynamic "Safe-Path" Navigation:**
     * **Feature:** A real-time path drawn over a hotel floor plan that avoids danger zones.
-    * **Implementation:** Use the **Google Maps JavaScript API** with custom `GroundOverlays` for floor plans. 
-    * **Logic:** When an incident is verified at specific coordinates, the backend (Next.js) updates a "danger_zones" collection in **Firestore**. The frontend uses a pathfinding algorithm (like A*) or the **Google Maps Directions Service** (using waypoints to avoid danger) to redraw the Polyline on the map.
+    * **Implementation:** Use **Leaflet** with **OpenStreetMap** tiles and custom image overlays for floor plans.
+    * **Logic:** When an incident is verified at specific coordinates, the backend (Next.js) updates a "danger_zones" collection in **Firestore**. The frontend uses a pathfinding algorithm (like A*) to redraw the Polyline while avoiding danger zones.
 * **One-Tap Multimodal SOS:**
     * **Feature:** Send text, audio, or video distress signals.
     * **Implementation:** Use the **MediaRecorder API** to capture audio/video directly in the browser. 
@@ -34,7 +34,7 @@ This document outlines the technical execution of the AegisNode crisis coordinat
     * **Display:** A scrolling feed of "Synthesized Incidents" instead of raw data.
 * **Occupancy & Safety Heatmap:**
     * **Feature:** Visualize where guests are and their safety status.
-    * **Implementation:** Use **Firestore Real-time Listeners** (`onSnapshot`). Map guest coordinates to the **Google Maps Advanced Markers**.
+    * **Implementation:** Use **Firestore Real-time Listeners** (`onSnapshot`). Map guest coordinates to **Leaflet** circle markers and styled tooltips.
     * **Styling:** Use CSS animations to create "pulsing" effects: Green for "Safe," Red for "Needs Help," Grey for "No Response."
 * **Critical Alert Broadcast:**
     * **Feature:** Send loud, bypass-silence notifications to all devices.
@@ -49,7 +49,7 @@ This document outlines the technical execution of the AegisNode crisis coordinat
 ### Key Features & Implementation
 * **Technical Floor Plan Overlays:**
     * **Feature:** Toggling views for fire hydrants, gas lines, and electrical shut-offs.
-    * **Implementation:** Use **Google Maps Data Layer (GeoJSON)**. Store the technical blueprints as GeoJSON files. Responders can toggle layers using a `Checklist` UI.
+    * **Implementation:** Use **Leaflet GeoJSON layers**. Store the technical blueprints as GeoJSON files. Responders can toggle layers using a `Checklist` UI.
 * **Gemini Live Translator Bridge:**
     * **Feature:** Two-way voice communication between responders and trapped guests.
     * **API:** **Gemini Live API** (Multimodal WebSockets).
@@ -66,7 +66,7 @@ This document outlines the technical execution of the AegisNode crisis coordinat
 | :--- | :--- | :--- |
 | **Multimodal Triage** | Gemini 3 Flash | Analyzes user videos/audio for fire, smoke, or structural damage. |
 | **Incident Synthesis** | Gemini 3 Flash | Clusters 100+ reports into 1 manageable event for staff. |
-| **Pathfinding Logic** | Maps Directions API | Calculates evacuation routes while avoiding custom "Waypoints" (Danger). |
+| **Pathfinding Logic** | A* + custom route engine | Calculates evacuation routes while avoiding custom "Waypoints" (Danger). |
 | **Translation** | Cloud Translation API | High-speed, low-latency translation of emergency alerts. |
 
 ---
