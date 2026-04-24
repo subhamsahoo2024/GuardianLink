@@ -10,8 +10,25 @@ type BroadcastBody = {
 
 const allowedPriority: Priority[] = ["low", "normal", "high", "critical"];
 
-export async function GET() {
-  return NextResponse.json({ broadcasts: listBroadcasts() });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const filterTarget = searchParams.get("target") as string | null;
+
+  let allBroadcasts = listBroadcasts();
+
+  if (filterTarget === "guests") {
+    // Return only broadcasts targeted at guests or all
+    allBroadcasts = allBroadcasts.filter(
+      (b) => b.target === "guests" || b.target === "all",
+    );
+  } else if (filterTarget === "staff") {
+    // Return only broadcasts targeted at staff or all
+    allBroadcasts = allBroadcasts.filter(
+      (b) => b.target === "staff" || b.target === "all",
+    );
+  }
+
+  return NextResponse.json({ broadcasts: allBroadcasts });
 }
 
 export async function POST(request: Request) {

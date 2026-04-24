@@ -669,8 +669,8 @@ export default function ResponderPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card variant="elevated" className="space-y-4">
+        <div className="grid gap-4 md:gap-5 md:grid-cols-[1.1fr_0.9fr] lg:gap-6 lg:grid-cols-[1.2fr_0.8fr] overflow-hidden">
+          <Card variant="elevated" className="min-w-0 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <PanelLeft className="text-brand-light" />
@@ -737,7 +737,7 @@ export default function ResponderPage() {
             ) : null}
           </Card>
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <Card variant="glass" className="space-y-3">
               <div className="flex items-center gap-3">
                 <ShieldHalf className="text-safe-light" />

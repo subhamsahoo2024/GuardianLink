@@ -529,9 +529,9 @@ export default function StaffPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-          <aside className="space-y-3">
-            <Card variant="elevated" className="space-y-2 p-3">
+        <div className="grid gap-4 md:grid-cols-[180px_1fr] lg:grid-cols-[240px_1fr] overflow-hidden">
+          <aside className="min-w-0 space-y-3">
+            <Card variant="elevated" className="space-y-2 p-3 overflow-hidden">
               {sectionLabels.map((section) => (
                 <button
                   key={section.key}
@@ -550,7 +550,7 @@ export default function StaffPage() {
             </Card>
           </aside>
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             {(activeSection === "overview" ||
               activeSection === "incidents") && (
               <Card variant="elevated" className="space-y-4">
