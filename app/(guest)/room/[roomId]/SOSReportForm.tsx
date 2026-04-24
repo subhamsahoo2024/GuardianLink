@@ -2,11 +2,9 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import { Mic, Paperclip, Send, Square, Video } from "lucide-react";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
-import { storage } from "@/lib/firebase";
 import { useRoomContext } from "./RoomContext";
 
 type CaptureMode = "audio" | "video";
@@ -56,29 +54,68 @@ export default function SOSReportForm() {
     setIsRecording(false);
   }
 
-  async function uploadMediaToFirebase(blob: Blob) {
-    const extension = blob.type.includes("video") ? "webm" : "ogg";
+  async function uploadMediaToCloudinary(blob: Blob) {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    const uploadFolder =
+      process.env.NEXT_PUBLIC_CLOUDINARY_FOLDER || "guardianlink/sos_reports";
+
+    if (!cloudName || !uploadPreset) {
+      throw new Error(
+        "Cloudinary is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.",
+      );
+    }
+
     const timestamp = Date.now();
-    const filename = `${timestamp}.${extension}`;
-    const storagePath = `sos_reports/${roomId}/${filename}`;
-    const mediaRef = ref(storage, storagePath);
+    const extension = blob.type.includes("video")
+      ? "webm"
+      : blob.type.includes("image")
+        ? "jpg"
+        : "bin";
+    const filename = `${roomId}-${timestamp}.${extension}`;
 
-    await uploadBytes(mediaRef, blob, {
-      contentType: blob.type || "application/octet-stream",
-      customMetadata: {
-        roomId,
-        hotelName,
-        floor: String(floor),
+    const formData = new FormData();
+    formData.append("file", blob, filename);
+    formData.append("upload_preset", uploadPreset);
+    formData.append("folder", uploadFolder);
+    formData.append("public_id", `${roomId}/${timestamp}`);
+    formData.append(
+      "context",
+      `roomId=${roomId}|hotelName=${hotelName}|floor=${floor}`,
+    );
+    formData.append("resource_type", "auto");
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      {
+        method: "POST",
+        body: formData,
       },
-    });
+    );
 
-    const downloadURL = await getDownloadURL(mediaRef);
+    if (!response.ok) {
+      throw new Error("Cloudinary upload failed");
+    }
+
+    const payload = (await response.json()) as {
+      secure_url?: string;
+      public_id?: string;
+      resource_type?: string;
+      bytes?: number;
+      format?: string;
+    };
+
+    if (!payload.secure_url) {
+      throw new Error("Cloudinary did not return a secure URL");
+    }
 
     return {
-      storagePath,
-      downloadURL,
+      mediaUrl: payload.secure_url,
+      publicId: payload.public_id || null,
+      resourceType: payload.resource_type || null,
       mimeType: blob.type || "application/octet-stream",
-      size: blob.size,
+      size: payload.bytes || blob.size,
+      format: payload.format || null,
     };
   }
 
@@ -159,7 +196,7 @@ export default function SOSReportForm() {
 
     try {
       const media = mediaBlobRef.current
-        ? await uploadMediaToFirebase(mediaBlobRef.current)
+        ? await uploadMediaToCloudinary(mediaBlobRef.current)
         : undefined;
 
       const response = await fetch("/api/sos", {

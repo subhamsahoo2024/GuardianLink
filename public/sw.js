@@ -30,16 +30,17 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter(
-            (key) =>
-              ![SHELL_CACHE, RUNTIME_CACHE, MAPS_CACHE].includes(key),
-          )
-          .map((key) => caches.delete(key)),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter(
+              (key) => ![SHELL_CACHE, RUNTIME_CACHE, MAPS_CACHE].includes(key),
+            )
+            .map((key) => caches.delete(key)),
+        ),
       ),
-    ),
   );
   self.clients.claim();
 });
@@ -106,6 +107,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (MAPS_MATCHERS.some((prefix) => request.url.startsWith(prefix))) {
     event.respondWith(staleWhileRevalidate(request, MAPS_CACHE));
     return;
@@ -113,7 +119,6 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin === self.location.origin) {
     if (
-      url.pathname.startsWith("/_next/") ||
       url.pathname.startsWith("/icons/") ||
       url.pathname.endsWith(".svg") ||
       url.pathname.endsWith(".png") ||

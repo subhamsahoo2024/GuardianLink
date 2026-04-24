@@ -86,6 +86,7 @@ function priorityVariant(
 
 export default function StaffPage() {
   type LeafletModule = typeof import("leaflet");
+  type LeafletMap = import("leaflet").Map;
   type RemovableLayer = { remove: () => void };
 
   const [authenticated, setAuthenticated] = useState(demoBypassEnabled);
@@ -123,7 +124,7 @@ export default function StaffPage() {
   const [zoneBusy, setZoneBusy] = useState(false);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<unknown>(null);
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
   const leafletModuleRef = useRef<LeafletModule | null>(null);
   const mapDrawnObjectsRef = useRef<RemovableLayer[]>([]);
 
@@ -227,16 +228,9 @@ export default function StaffPage() {
         L.tileLayer(osmTileUrl, {
           attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 20,
-        }).addTo(mapInstanceRef.current as { addLayer: (layer: unknown) => void });
+        }).addTo(mapInstanceRef.current);
 
-        (
-          mapInstanceRef.current as {
-            on: (
-              event: string,
-              handler: (evt: { latlng?: { lat: number; lng: number } }) => void,
-            ) => void;
-          }
-        ).on("click", (evt) => {
+        mapInstanceRef.current.on("click", (evt) => {
           if (!evt.latlng) return;
           setClickedPoint({ lat: evt.latlng.lat, lng: evt.latlng.lng });
           setActiveSection("danger-zones");
@@ -264,9 +258,7 @@ export default function StaffPage() {
     const L = leafletModuleRef.current;
     if (!L) return;
 
-    const map = mapInstanceRef.current as {
-      addLayer: (layer: unknown) => void;
-    };
+    const map = mapInstanceRef.current;
 
     mapDrawnObjectsRef.current.forEach((item) => item.remove());
     mapDrawnObjectsRef.current = [];

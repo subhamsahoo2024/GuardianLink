@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminDb, isFirebaseAdminConfigured } from "@/lib/firebase-admin";
 
 type SOSRequestBody = {
   roomId?: string;
@@ -9,8 +10,7 @@ type SOSRequestBody = {
     mimeType?: string;
     size?: number;
     base64?: string;
-    storagePath?: string;
-    downloadURL?: string;
+    mediaUrl?: string;
   };
 };
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   const roomId = (body.roomId || "").trim();
   const message = (body.message || "").trim();
-  const hasMedia = Boolean(body.media?.base64 || body.media?.downloadURL);
+  const hasMedia = Boolean(body.media?.base64 || body.media?.mediaUrl);
 
   if (!roomId) {
     return NextResponse.json({ error: "roomId is required" }, { status: 400 });
@@ -50,12 +50,28 @@ export async function POST(request: Request) {
       ? {
           mimeType: body.media?.mimeType || "application/octet-stream",
           size: body.media?.size || 0,
-          storagePath: body.media?.storagePath || null,
-          downloadURL: body.media?.downloadURL || null,
+          mediaUrl: body.media?.mediaUrl || null,
         }
       : null,
     receivedAt: new Date().toISOString(),
   };
+
+  if (!isFirebaseAdminConfigured || !adminDb) {
+    return NextResponse.json(
+      {
+        error:
+          "Firebase Admin is not configured. Set FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY, and NEXT_PUBLIC_FIREBASE_PROJECT_ID.",
+      },
+      { status: 503 },
+    );
+  }
+
+  await adminDb.collection("sos_reports").add({
+    ...report,
+    status: "new",
+    createdAt: report.receivedAt,
+    updatedAt: report.receivedAt,
+  });
 
   return NextResponse.json({ ok: true, report }, { status: 201 });
 }

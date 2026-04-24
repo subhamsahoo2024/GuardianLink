@@ -3,12 +3,7 @@ import type { NextConfig } from "next";
 const remoteImagePatterns = [
   {
     protocol: "https",
-    hostname: "firebasestorage.googleapis.com",
-    pathname: "/v0/b/**",
-  },
-  {
-    protocol: "https",
-    hostname: "storage.googleapis.com",
+    hostname: "res.cloudinary.com",
     pathname: "/**",
   },
   {
@@ -52,8 +47,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              `default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://tile.openstreetmap.org https://lh3.googleusercontent.com; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://firestore.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://translation.googleapis.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; media-src 'self' blob: data:;`,
+            value: `default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://res.cloudinary.com https://tile.openstreetmap.org https://lh3.googleusercontent.com; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://translation.googleapis.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; media-src 'self' blob: data:;`,
           },
         ],
       },

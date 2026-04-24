@@ -36,6 +36,7 @@ type OverlayToggle = {
   electrical: boolean;
 };
 type LeafletModule = typeof import("leaflet");
+type LeafletMap = import("leaflet").Map;
 type RemovableLayer = { remove: () => void };
 
 const responderBypassEnabled =
@@ -102,7 +103,7 @@ export default function ResponderPage() {
   const [mapInitFailed, setMapInitFailed] = useState(false);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<unknown>(null);
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
   const leafletModuleRef = useRef<LeafletModule | null>(null);
   const mapObjectsRef = useRef<RemovableLayer[]>([]);
   const socketRef = useRef<WebSocket | null>(null);
@@ -219,16 +220,9 @@ export default function ResponderPage() {
         L.tileLayer(osmTileUrl, {
           attribution: "&copy; OpenStreetMap contributors",
           maxZoom: 20,
-        }).addTo(mapInstanceRef.current as { addLayer: (layer: unknown) => void });
+        }).addTo(mapInstanceRef.current);
 
-        (
-          mapInstanceRef.current as {
-            on: (
-              event: string,
-              handler: (evt: { latlng?: { lat: number; lng: number } }) => void,
-            ) => void;
-          }
-        ).on("click", (event) => {
+        mapInstanceRef.current.on("click", (event) => {
           const latLng = event.latlng;
           if (!latLng) return;
           setMessages((previous) => [
@@ -265,9 +259,7 @@ export default function ResponderPage() {
     const L = leafletModuleRef.current;
     if (!L) return;
 
-    const map = mapInstanceRef.current as {
-      addLayer: (layer: unknown) => void;
-    };
+    const map = mapInstanceRef.current;
 
     mapObjectsRef.current.forEach((shape) => shape.remove());
     mapObjectsRef.current = [];
@@ -315,7 +307,10 @@ export default function ResponderPage() {
         layer.geoJson.features.forEach((feature) => {
           if (feature.geometry.type === "Point") {
             const marker = L.circleMarker(
-              [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
+              [
+                feature.geometry.coordinates[1],
+                feature.geometry.coordinates[0],
+              ],
               {
                 radius: 6,
                 color: "#0f172a",
@@ -694,9 +689,9 @@ export default function ResponderPage() {
                 {[2, 3, 4].map((floor) => (
                   <button
                     key={floor}
-                      type="button"
+                    type="button"
                     onClick={() => setSelectedFloor(floor)}
-                      aria-label={`Select floor ${floor}`}
+                    aria-label={`Select floor ${floor}`}
                     className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
                       selectedFloor === floor
                         ? "bg-brand/15 text-brand-light"

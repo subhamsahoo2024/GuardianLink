@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+/* @import "leaflet/dist/leaflet.css"; */
 
 /* ============================================
    GuardianLink Design System
@@ -155,7 +155,8 @@ select {
    ============================================ */
 
 @keyframes pulse-danger {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
   }
   50% {
@@ -164,7 +165,8 @@ select {
 }
 
 @keyframes pulse-safe {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
   }
   50% {
@@ -173,7 +175,8 @@ select {
 }
 
 @keyframes pulse-warning {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
   }
   50% {
@@ -191,7 +194,8 @@ select {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
