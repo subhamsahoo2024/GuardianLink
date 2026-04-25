@@ -40,7 +40,7 @@ const demoPasscode =
   process.env.NEXT_PUBLIC_STAFF_DEMO_PASSCODE || "guardian-staff-demo";
 const osmTileUrl =
   process.env.NEXT_PUBLIC_OSM_TILE_URL ||
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 const sectionLabels: Array<{ key: DashboardSection; label: string }> = [
   { key: "overview", label: "Overview" },

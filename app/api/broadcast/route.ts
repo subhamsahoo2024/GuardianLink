@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { addBroadcast, listBroadcasts } from "@/lib/staff/store";
+import { adminDb, isFirebaseAdminConfigured } from "@/lib/firebase-admin";
+import {
+  addBroadcast,
+  deleteBroadcast,
+  listBroadcasts,
+} from "@/lib/staff/store";
 import { Priority } from "@/lib/staff/types";
 
 type BroadcastBody = {
@@ -15,6 +20,33 @@ export async function GET(request: Request) {
   const filterTarget = searchParams.get("target") as string | null;
 
   let allBroadcasts = listBroadcasts();
+
+  if (isFirebaseAdminConfigured && adminDb) {
+    const snapshot = await adminDb
+      .collection("broadcasts")
+      .orderBy("createdAt", "desc")
+      .limit(100)
+      .get();
+
+    allBroadcasts = snapshot.docs.map((doc) => {
+      const data = doc.data() as {
+        message?: string;
+        priority?: Priority;
+        target?: "all" | "staff" | "guests";
+        delivery?: "sent" | "queued" | "failed";
+        createdAt?: string;
+      };
+
+      return {
+        id: doc.id,
+        message: data.message || "",
+        priority: data.priority || "normal",
+        target: data.target || "all",
+        delivery: data.delivery || "queued",
+        createdAt: data.createdAt || new Date(0).toISOString(),
+      };
+    });
+  }
 
   if (filterTarget === "guests") {
     // Return only broadcasts targeted at guests or all
@@ -65,7 +97,55 @@ export async function POST(request: Request) {
   );
 
   const delivery = fcmEnabled ? "sent" : "queued";
-  const broadcast = addBroadcast({ message, priority, target, delivery });
+  let broadcast = addBroadcast({ message, priority, target, delivery });
+
+  if (isFirebaseAdminConfigured && adminDb) {
+    const createdAt = new Date().toISOString();
+    const created = await adminDb.collection("broadcasts").add({
+      message,
+      priority,
+      target,
+      delivery,
+      createdAt,
+    });
+
+    broadcast = {
+      id: created.id,
+      message,
+      priority,
+      target,
+      delivery,
+      createdAt,
+    };
+  }
 
   return NextResponse.json({ broadcast, fcmEnabled }, { status: 201 });
+}
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = (searchParams.get("id") || "").trim();
+
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  if (isFirebaseAdminConfigured && adminDb) {
+    try {
+      await adminDb.collection("broadcasts").doc(id).delete();
+      return NextResponse.json({ ok: true, id }, { status: 200 });
+    } catch {
+      return NextResponse.json(
+        { error: "Failed to delete broadcast from Firestore" },
+        { status: 500 },
+      );
+    }
+  }
+
+  const removed = deleteBroadcast(id);
+  if (!removed) {
+    return NextResponse.json({ error: "broadcast not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, id }, { status: 200 });
 }

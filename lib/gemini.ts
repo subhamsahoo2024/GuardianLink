@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { logAiDecision } from "@/lib/ai/audit";
 import { ensurePrivacyInstruction, scrubPII } from "@/lib/ai/privacy";
 
@@ -6,65 +6,59 @@ const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
 if (!apiKey) {
   console.warn(
-    "GOOGLE_GEMINI_API_KEY is not set. AI features will be unavailable."
+    "GOOGLE_GEMINI_API_KEY is not set. AI features will be unavailable.",
   );
 }
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 /**
- * Get the Gemini 2.0 Flash model for text/multimodal analysis.
- * Used for: incident synthesis, triage analysis, translations.
+ * Configure the model with System Instructions and JSON Mode.
  */
-export function getGeminiModel() {
+export function getGeminiModel(
+  systemInstruction: string,
+  isJson: boolean = false,
+) {
   if (!genAI) {
-    throw new Error("Gemini AI is not configured. Set GOOGLE_GEMINI_API_KEY.");
+    throw new Error("Gemini AI is not configured.");
   }
-  return genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+  return genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    systemInstruction, // Set the "personality" here
+    generationConfig: isJson
+      ? { responseMimeType: "application/json" }
+      : undefined,
+  });
 }
 
 /**
- * Analyze a media file (image/video) for hazard detection.
- * Returns structured hazard assessment.
+ * 1. Analyze Media for Hazards
  */
-export async function analyzeMedia(
-  mediaBase64: string,
-  mimeType: string
-): Promise<{
-  hazard: string;
-  severity: number;
-  detail: string;
-  summary: string;
-}> {
-  const model = getGeminiModel();
+export async function analyzeMedia(mediaBase64: string, mimeType: string) {
+  // Use System Instructions for the "Role"
+  const systemPrompt =
+    "You are an emergency response AI. Analyze distress media and identify hazards accurately and concisely.";
+  const model = getGeminiModel(systemPrompt, true);
 
-  const prompt = ensurePrivacyInstruction(`You are an emergency response AI analyzing a distress signal from a hotel guest.
-Analyze this media and respond with ONLY valid JSON (no markdown):
-{
-  "hazard": "fire|flood|structural|medical|smoke|chemical|unknown",
-  "severity": <1-10>,
-  "detail": "<specific type, e.g. electrical fire, gas leak>",
-  "summary": "<1 sentence description of what you see>"
-}
-IMPORTANT: Do NOT include any personally identifiable information (PII) in your response.`);
+  const userPrompt = `Analyze this media. Respond with this JSON structure:
+  {
+    "hazard": "fire|flood|structural|medical|smoke|chemical|unknown",
+    "severity": number (1-10),
+    "detail": "short string",
+    "summary": "1 sentence description"
+  }
+  IMPORTANT: No PII (names, faces, IDs).`;
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        mimeType,
-        data: mediaBase64,
-      },
-    },
-    {
-      text: prompt,
-    },
-  ]);
-
-  const text = result.response.text();
   try {
-    const parsed = JSON.parse(
-      text.replace(/```json?\n?/g, "").replace(/```/g, "").trim(),
-    );
+    const result = await model.generateContent([
+      { inlineData: { mimeType, data: mediaBase64 } },
+      { text: userPrompt },
+    ]);
+
+    const text = result.response.text();
+    const parsed = JSON.parse(text); // No Regex needed with JSON Mode!
+
     logAiDecision({
       operation: "triage",
       model: "gemini-2.0-flash",
@@ -75,134 +69,95 @@ IMPORTANT: Do NOT include any personally identifiable information (PII) in your 
       success: true,
       details: "Multimodal hazard analysis completed.",
     });
+
     return parsed;
-  } catch {
-    logAiDecision({
-      operation: "triage",
-      model: "gemini-2.0-flash",
-      provider: "fallback",
-      inputSize: mediaBase64.length,
-      outputSize: text.length,
-      redactions: 0,
-      success: false,
-      details: "Failed to parse model JSON output.",
-    });
+  } catch (error) {
+    console.error("Gemini Triage Error:", error);
     return {
       hazard: "unknown",
       severity: 5,
-      detail: "Unable to parse analysis",
-      summary: text.slice(0, 200),
+      detail: "Analysis failed",
+      summary: "Visual analysis unavailable.",
     };
   }
 }
 
 /**
- * Synthesize multiple SOS reports into a concise incident summary.
+ * 2. Synthesize Reports
  */
 export async function synthesizeReports(
-  reports: { text: string; room: string; timestamp: string }[]
-): Promise<{
-  type: string;
-  location: string;
-  trapped: number;
-  summary: string;
-}> {
-  const model = getGeminiModel();
+  reports: { text: string; room: string; timestamp: string }[],
+) {
+  const systemPrompt =
+    "You are a crisis command center AI. Synthesize multiple distress signals into a tactical summary for first responders.";
+  const model = getGeminiModel(systemPrompt, true);
 
   let redactions = 0;
   const reportText = reports
     .map((r) => {
       const scrubbed = scrubPII(r.text);
       redactions += scrubbed.redactionCount;
-      return `[Room ${r.room} at ${r.timestamp}]: ${scrubbed.text}`;
+      return `[Room ${r.room}]: ${scrubbed.text}`;
     })
     .join("\n");
 
-  const synthesisPrompt = ensurePrivacyInstruction(
-    `You are a crisis command center AI. Synthesize these ${reports.length} distress reports into a single incident summary.
+  const userPrompt = `Synthesize these reports into this JSON format:
+  {
+    "type": "fire|flood|structural|medical|chemical|unknown",
+    "location": "primary location",
+    "trapped": number,
+    "summary": "3 sentences max"
+  }
+  
+  Reports:
+  ${reportText}`;
 
-Reports:
-${reportText}
-
-Respond with ONLY valid JSON (no markdown):
-{
-  "type": "<fire|flood|structural|medical|chemical|unknown>",
-  "location": "<primary location description>",
-  "trapped": <estimated number of people needing help>,
-  "summary": "<3 sentence maximum summary of the situation>"
-}
-IMPORTANT: Do NOT include any personally identifiable information (PII).`,
-  );
-
-  const result = await model.generateContent(synthesisPrompt);
-
-  const text = result.response.text();
   try {
-    const parsed = JSON.parse(
-      text.replace(/```json?\n?/g, "").replace(/```/g, "").trim(),
-    );
-    logAiDecision({
-      operation: "incident_synthesis",
-      model: "gemini-2.0-flash",
-      provider: "gemini",
-      inputSize: reportText.length,
-      outputSize: text.length,
-      redactions,
-      success: true,
-      details: `Synthesized ${reports.length} reports.`,
-    });
-    return parsed;
-  } catch {
-    logAiDecision({
-      operation: "incident_synthesis",
-      model: "gemini-2.0-flash",
-      provider: "fallback",
-      inputSize: reportText.length,
-      outputSize: text.length,
-      redactions,
-      success: false,
-      details: "Failed to parse synthesis JSON output.",
-    });
+    const result = await model.generateContent(userPrompt);
+    const text = result.response.text();
+    return JSON.parse(text);
+  } catch (error) {
     return {
       type: "unknown",
-      location: "Unknown",
+      location: "Multi-floor",
       trapped: 0,
-      summary: text.slice(0, 300),
+      summary: "Reports indicate generalized emergency.",
     };
   }
 }
 
 /**
- * Translate an emergency message using Gemini.
+ * 3. Translate Emergency Message
  */
 export async function translateMessage(
   message: string,
-  targetLanguage: string
+  targetLanguage: string,
 ): Promise<string> {
-  const model = getGeminiModel();
+  // Use System Instruction to set the tone - VERY IMPORTANT FOR TRANSLATION
+  const systemPrompt = `You are an expert emergency translator. Translate alerts to ${targetLanguage}. 
+  Maintain urgency, technical accuracy, and a calm, authoritative tone. Return ONLY the translation.`;
 
+  const model = getGeminiModel(systemPrompt, false);
   const scrubbed = scrubPII(message);
-  const prompt = ensurePrivacyInstruction(`Translate the following emergency alert to ${targetLanguage}. 
-Keep the translation urgent and clear. Return ONLY the translated text, nothing else.
 
-Message: ${scrubbed.text}`);
+  try {
+    const result = await model.generateContent(scrubbed.text);
+    const translatedText = result.response.text().trim();
 
-  const result = await model.generateContent(prompt);
+    logAiDecision({
+      operation: "translation",
+      model: "gemini-2.0-flash",
+      provider: "gemini",
+      inputSize: message.length,
+      outputSize: translatedText.length,
+      redactions: scrubbed.redactionCount,
+      success: true,
+      details: `Translated to ${targetLanguage}.`,
+    });
 
-  const translatedText = result.response.text().trim();
-
-  logAiDecision({
-    operation: "translation",
-    model: "gemini-2.0-flash",
-    provider: "gemini",
-    inputSize: message.length,
-    outputSize: translatedText.length,
-    redactions: scrubbed.redactionCount,
-    success: true,
-    details: `Translated emergency message to ${targetLanguage}.`,
-  });
-
-  return translatedText;
+    return translatedText;
+  } catch (error) {
+    console.error("Translation Error:", error);
+    return message; // Return original if translation fails
+  }
 }
-
-export default genAI;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { translateMessage } from "@/lib/gemini";
 
 type TranslateRequestBody = {
   text?: string;
@@ -6,11 +7,41 @@ type TranslateRequestBody = {
   sourceLanguage?: string;
 };
 
-type GoogleTranslateResponse = {
-  data?: {
-    translations?: Array<{ translatedText?: string }>;
-  };
+const supportedTargets: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+  zh: "Mandarin Chinese",
+  fr: "French",
+  ar: "Arabic",
+  ru: "Russian",
+  hi: "Hindi",
+  ja: "Japanese",
+  ta: "Tamil",
 };
+
+function normalizeTargetLanguage(input: string) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const lower = trimmed.toLowerCase();
+
+  // Accept either canonical code or region variant (for example: en-US).
+  const byCode = Object.keys(supportedTargets).find(
+    (code) => lower === code || lower.startsWith(`${code}-`),
+  );
+  if (byCode) {
+    return byCode;
+  }
+
+  const byName = Object.entries(supportedTargets).find(
+    ([, language]) => language.toLowerCase() === lower,
+  );
+  if (byName) {
+    return byName[0];
+  }
+
+  return null;
+}
 
 export async function POST(request: Request) {
   let body: TranslateRequestBody;
@@ -39,45 +70,56 @@ export async function POST(request: Request) {
     );
   }
 
-  if (targetLanguage.toLowerCase().startsWith("en")) {
+  const normalizedTarget = normalizeTargetLanguage(targetLanguage);
+  if (!normalizedTarget) {
+    return NextResponse.json(
+      {
+        error:
+          "targetLanguage must be one of en, es, zh, fr, ar, ru, hi, ja, ta",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (normalizedTarget === "en") {
     return NextResponse.json({ translatedText: text, translated: false });
   }
 
-  const apiKey = process.env.GOOGLE_CLOUD_TRANSLATION_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ translatedText: text, translated: false });
+  if (!process.env.GOOGLE_GEMINI_API_KEY) {
+    return NextResponse.json(
+      {
+        translatedText: text,
+        translated: false,
+        error: "Gemini translation is not configured",
+      },
+      { status: 503 },
+    );
   }
 
   try {
-    const response = await fetch(
-      `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: text,
-          target: targetLanguage,
-          source: sourceLanguage || undefined,
-          format: "text",
-        }),
-      },
+    const hintPrefix = sourceLanguage
+      ? `Source language hint: ${sourceLanguage}.\n\n`
+      : "";
+    const translatedText = await translateMessage(
+      `${hintPrefix}${text}`,
+      supportedTargets[normalizedTarget],
     );
 
-    if (!response.ok) {
-      return NextResponse.json({ translatedText: text, translated: false });
-    }
-
-    const payload = (await response.json()) as GoogleTranslateResponse;
-    const translatedText =
-      payload.data?.translations?.[0]?.translatedText || text;
+    const didTranslate =
+      translatedText.trim().toLowerCase() !== text.trim().toLowerCase();
 
     return NextResponse.json({
       translatedText,
-      translated: translatedText !== text,
+      translated: didTranslate,
     });
   } catch {
-    return NextResponse.json({ translatedText: text, translated: false });
+    return NextResponse.json(
+      {
+        translatedText: text,
+        translated: false,
+        error: "Gemini translation failed",
+      },
+      { status: 502 },
+    );
   }
 }

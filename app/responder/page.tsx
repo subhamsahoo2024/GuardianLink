@@ -45,7 +45,7 @@ const responderPasscode =
   process.env.NEXT_PUBLIC_RESPONDER_DEMO_PASSCODE || "guardian-responder-demo";
 const osmTileUrl =
   process.env.NEXT_PUBLIC_OSM_TILE_URL ||
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 function roomStatusVariant(status: RoomRecord["status"]) {
   if (status === "trapped") return "danger" as const;

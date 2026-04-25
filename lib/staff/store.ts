@@ -285,6 +285,12 @@ export function addBroadcast(input: {
   return created;
 }
 
+export function deleteBroadcast(id: string): boolean {
+  const before = broadcasts.length;
+  broadcasts = broadcasts.filter((item) => item.id !== id);
+  return broadcasts.length < before;
+}
+
 if (incidents.length === 0) {
   incidents = [
     {

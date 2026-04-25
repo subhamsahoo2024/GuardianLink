@@ -12,7 +12,6 @@ import SOSButton from "./SOSButton";
 import SOSReportForm from "./SOSReportForm";
 import BatteryAwareLocationTracker from "./BatteryAwareLocationTracker";
 import MultilingualEmergencyTicker from "./MultilingualEmergencyTicker";
-import GuestBroadcastAlerts from "./GuestBroadcastAlerts";
 import { useRoomContext } from "./RoomContext";
 
 const instructions = [
@@ -70,8 +69,6 @@ export default function GuestRoomShell() {
 
       <div className="mx-auto mt-5 grid max-w-6xl gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
-          <GuestBroadcastAlerts />
-
           <Card variant="elevated" className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-danger/10" />
             <div className="relative space-y-6">
