@@ -307,6 +307,71 @@ export default function StaffPage() {
     });
   }, [dangerZones, guests, selectedFloor]);
 
+  useEffect(() => {
+    const heatmapVisible =
+      activeSection === "overview" || activeSection === "heatmap";
+    if (!authenticated || !heatmapVisible || !mapRef.current) return;
+
+    const currentMap = mapInstanceRef.current as
+      | ({
+          invalidateSize?: () => void;
+          remove?: () => void;
+          _container?: unknown;
+        } & LeafletMap)
+      | null;
+
+    if (
+      currentMap &&
+      currentMap._container &&
+      currentMap._container !== mapRef.current
+    ) {
+      currentMap.remove?.();
+      mapInstanceRef.current = null;
+      mapDrawnObjectsRef.current = [];
+    }
+
+    async function ensureMapBoundToCurrentContainer() {
+      if (!mapRef.current) return;
+
+      if (!leafletModuleRef.current) {
+        leafletModuleRef.current = await import("leaflet");
+      }
+
+      const L = leafletModuleRef.current;
+      if (!L || mapInstanceRef.current || !mapRef.current) return;
+
+      mapInstanceRef.current = L.map(mapRef.current, {
+        center: [40.7582, -73.9855],
+        zoom: 19,
+        zoomControl: false,
+      });
+
+      L.tileLayer(osmTileUrl, {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 20,
+      }).addTo(mapInstanceRef.current);
+
+      mapInstanceRef.current.on("click", (evt) => {
+        if (!evt.latlng) return;
+        setClickedPoint({ lat: evt.latlng.lat, lng: evt.latlng.lng });
+        setActiveSection("danger-zones");
+      });
+    }
+
+    void ensureMapBoundToCurrentContainer();
+
+    const timer = window.setTimeout(() => {
+      const map = mapInstanceRef.current as
+        | ({ invalidateSize?: () => void } & LeafletMap)
+        | null;
+      map?.invalidateSize?.();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [activeSection, authenticated]);
+
   async function handleSynthesize() {
     setSynthBusy(true);
     try {

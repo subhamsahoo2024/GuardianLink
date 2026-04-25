@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logAiDecision } from "@/lib/ai/audit";
-import { ensurePrivacyInstruction, scrubPII } from "@/lib/ai/privacy";
+import { scrubPII } from "@/lib/ai/privacy";
 
 const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
@@ -92,11 +92,9 @@ export async function synthesizeReports(
     "You are a crisis command center AI. Synthesize multiple distress signals into a tactical summary for first responders.";
   const model = getGeminiModel(systemPrompt, true);
 
-  let redactions = 0;
   const reportText = reports
     .map((r) => {
       const scrubbed = scrubPII(r.text);
-      redactions += scrubbed.redactionCount;
       return `[Room ${r.room}]: ${scrubbed.text}`;
     })
     .join("\n");
@@ -116,7 +114,7 @@ export async function synthesizeReports(
     const result = await model.generateContent(userPrompt);
     const text = result.response.text();
     return JSON.parse(text);
-  } catch (error) {
+  } catch {
     return {
       type: "unknown",
       location: "Multi-floor",
