@@ -26,16 +26,7 @@ import Card from "./_components/ui/Card";
 function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-x-0 top-0 z-20">
-        <AlertBanner
-          variant="danger"
-          messages={[
-            "Demo route slice is live",
-            "Guest, staff, and responder shells now open from the landing page",
-            "External API keys remain placeholders in .env.example",
-          ]}
-        />
-      </div>
+      <div className="absolute inset-x-0 top-0 z-20"></div>
 
       {/* Animated background grid */}
       <div className="absolute inset-0 grid-bg" />
