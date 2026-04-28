@@ -1,5 +1,7 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -37,9 +39,33 @@ type DashboardSection =
 const demoBypassEnabled = process.env.NEXT_PUBLIC_STAFF_DEMO_BYPASS !== "false";
 const demoPasscode =
   process.env.NEXT_PUBLIC_STAFF_DEMO_PASSCODE || "guardian-staff-demo";
-const osmTileUrl =
-  process.env.NEXT_PUBLIC_OSM_TILE_URL ||
-  "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const cartoTileUrl =
+  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const cartoAttribution =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+let leafletIconsConfigured = false;
+
+async function configureLeafletIcons() {
+  const L = await import("leaflet");
+
+  if (!leafletIconsConfigured) {
+    const defaultPrototype = L.Icon.Default.prototype as {
+      _getIconUrl?: unknown;
+    };
+    delete defaultPrototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl:
+        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
+    leafletIconsConfigured = true;
+  }
+
+  return L;
+}
 
 const sectionLabels: Array<{ key: DashboardSection; label: string }> = [
   { key: "overview", label: "Overview" },
@@ -219,10 +245,7 @@ export default function StaffPage() {
 
     async function initMap() {
       try {
-        // Dynamically import Leaflet CSS to ensure it loads in production
-        await import("leaflet/dist/leaflet.css");
-
-        const L = await import("leaflet");
+        const L = await configureLeafletIcons();
         leafletModuleRef.current = L;
         if (!mounted || !mapRef.current) return;
 
@@ -232,8 +255,8 @@ export default function StaffPage() {
           zoomControl: false,
         });
 
-        L.tileLayer(osmTileUrl, {
-          attribution: "&copy; OpenStreetMap contributors",
+        L.tileLayer(cartoTileUrl, {
+          attribution: cartoAttribution,
           maxZoom: 20,
         }).addTo(mapInstanceRef.current);
 
