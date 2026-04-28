@@ -605,10 +605,6 @@ export default function ResponderPage() {
             <h1 className="mt-3 text-3xl font-extrabold text-text-primary">
               Tactical tablet operations surface
             </h1>
-            <p className="mt-2 max-w-3xl text-text-secondary">
-              Technical overlays, multilingual bridge calls, and room-level
-              triage in one responder interface.
-            </p>
           </div>
 
           <div className="flex gap-3">
@@ -826,7 +822,7 @@ export default function ResponderPage() {
                     Gemini Live Translator Bridge
                   </h2>
                   <p className="text-sm text-text-secondary">
-                    WebSocket session + two-way audio stream + translated text
+                    WebSocket session, two-way audio stream, translated text
                     relay.
                   </p>
                 </div>
@@ -859,34 +855,37 @@ export default function ResponderPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <input
                   value={bridgeText}
                   onChange={(event) => setBridgeText(event.target.value)}
                   placeholder="Type responder message to translate"
-                  className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary"
+                  className="flex-1 w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary"
                 />
-                <Button
-                  variant="primary"
-                  icon={<Languages size={16} />}
-                  loading={bridgeBusy}
-                  onClick={() => {
-                    void sendBridgeText();
-                  }}
-                >
-                  Translate
-                </Button>
-                <Button
-                  variant={recordingAudio ? "danger" : "warning"}
-                  icon={
-                    recordingAudio ? <MicOff size={16} /> : <Mic size={16} />
-                  }
-                  onClick={() => {
-                    void toggleAudioBridge();
-                  }}
-                >
-                  {recordingAudio ? "Stop" : "Mic"}
-                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="primary"
+                    icon={<Languages size={16} />}
+                    loading={bridgeBusy}
+                    onClick={() => {
+                      void sendBridgeText();
+                    }}
+                  >
+                    Translate
+                  </Button>
+                  <Button
+                    variant={recordingAudio ? "danger" : "warning"}
+                    icon={
+                      recordingAudio ? <MicOff size={16} /> : <Mic size={16} />
+                    }
+                    onClick={() => {
+                      void toggleAudioBridge();
+                    }}
+                  >
+                    {recordingAudio ? "Stop" : "Mic"}
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border bg-surface px-3 py-3 text-xs text-text-muted">

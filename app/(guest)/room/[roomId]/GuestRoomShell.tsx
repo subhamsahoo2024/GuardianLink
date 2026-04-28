@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { ArrowLeft, MapPinned, ShieldAlert, Siren } from "lucide-react";
-import AlertBanner from "@/app/_components/ui/AlertBanner";
 import Badge from "@/app/_components/ui/Badge";
 import Button from "@/app/_components/ui/Button";
 import Card from "@/app/_components/ui/Card";
-import LoadingSkeleton from "@/app/_components/ui/LoadingSkeleton";
 import StatusPulse from "@/app/_components/ui/StatusPulse";
 import SOSButton from "./SOSButton";
 import SOSReportForm from "./SOSReportForm";
@@ -20,9 +18,155 @@ const instructions = [
   "Watch the path card for the current safe exit direction.",
 ];
 
+function DemoExitMap() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/90 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="mt-1 text-sm font-semibold text-text-primary">
+            Guest room to Stairwell B
+          </div>
+        </div>
+        <Badge variant="safe">Open route</Badge>
+      </div>
+
+      <div className="relative h-56 overflow-hidden rounded-xl border border-border bg-[#101522]">
+        <svg viewBox="0 0 600 320" className="absolute inset-0 h-full w-full">
+          <defs>
+            <pattern
+              id="grid"
+              width="30"
+              height="30"
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d="M 30 0 L 0 0 0 30"
+                fill="none"
+                stroke="rgba(148,163,184,0.16)"
+                strokeWidth="1"
+              />
+            </pattern>
+            <linearGradient id="routeGlow" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#34d399" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+          <rect width="600" height="320" fill="#101522" />
+          <rect width="600" height="320" fill="url(#grid)" />
+
+          <rect
+            x="40"
+            y="38"
+            width="148"
+            height="92"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+          <rect
+            x="214"
+            y="38"
+            width="160"
+            height="92"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+          <rect
+            x="400"
+            y="38"
+            width="160"
+            height="92"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+          <rect
+            x="40"
+            y="164"
+            width="148"
+            height="110"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+          <rect
+            x="214"
+            y="164"
+            width="160"
+            height="110"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+          <rect
+            x="400"
+            y="164"
+            width="160"
+            height="110"
+            rx="16"
+            fill="#182035"
+            stroke="#334155"
+          />
+
+          <text x="64" y="76" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Guest room
+          </text>
+          <text x="238" y="76" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Hallway
+          </text>
+          <text x="428" y="76" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Stairwell B
+          </text>
+          <text x="64" y="204" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Smoke area
+          </text>
+          <text x="238" y="204" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Safe corridor
+          </text>
+          <text x="428" y="204" fill="#e8eaf0" fontSize="16" fontWeight="600">
+            Exit door
+          </text>
+
+          <circle cx="112" cy="110" r="10" fill="#ef4444" />
+          <circle cx="490" cy="95" r="10" fill="#10b981" />
+
+          <path
+            d="M 122 110 L 214 110 L 214 165 L 400 165 L 400 190 L 490 190 L 490 95"
+            fill="none"
+            stroke="url(#routeGlow)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="0"
+          />
+          <path
+            d="M 122 110 L 214 110 L 214 165 L 400 165 L 400 190 L 490 190 L 490 95"
+            fill="none"
+            stroke="#ffffff"
+            strokeOpacity="0.18"
+            strokeWidth="14"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          <polygon points="490,95 474,89 476,101" fill="#34d399" />
+          <polygon points="490,95 504,88 502,100" fill="#34d399" />
+          <polygon points="490,95 482,109 494,108" fill="#34d399" />
+        </svg>
+
+        <div className="absolute left-4 bottom-4 rounded-xl border border-safe/30 bg-safe/10 px-3 py-2 text-xs text-safe-light shadow-[0_0_24px_rgba(16,185,129,0.18)]">
+          Follow the glowing path to Stairwell B
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GuestRoomShell() {
   const { roomId, floor, hotelName, status, syncState, setStatus } =
     useRoomContext();
+  const guestDemoMode = process.env.NEXT_PUBLIC_GUEST_DEMO_MODE !== "false";
 
   const statusLabel =
     status === "needs-help"
@@ -58,15 +202,6 @@ export default function GuestRoomShell() {
 
   return (
     <div className="flex-1 px-4 py-5 sm:px-6 lg:px-8">
-      <AlertBanner
-        variant="warning"
-        messages={[
-          `Room ${roomId} loaded (${hotelName}, floor ${floor})`,
-          "SOS capture, route guidance, and battery-aware location tracking are active",
-        ]}
-        className="rounded-2xl"
-      />
-
       <div className="mx-auto mt-5 max-w-[1200px] space-y-6 overflow-hidden">
         <Card variant="elevated" className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-danger/10" />
@@ -80,7 +215,7 @@ export default function GuestRoomShell() {
                   Room {roomId}
                 </h1>
                 <p className="max-w-2xl text-text-secondary">
-                  This guest shell is the zero-install entry point for
+                  {hotelName} guest shell is the zero-install entry point for
                   evacuation guidance, help requests, and language-aware
                   emergency alerts.
                 </p>
@@ -218,32 +353,32 @@ export default function GuestRoomShell() {
                   <h2 className="text-xl font-bold text-text-primary">
                     Current safe-path preview
                   </h2>
-                  <p className="mt-2 text-sm text-text-secondary">
-                    The full indoor map overlay is not wired yet, so this slice
-                    shows the route state that the live map will eventually
-                    control.
-                  </p>
                 </div>
               </div>
 
-              <div className="mt-6 rounded-2xl border border-border bg-surface/80 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.24em] text-text-muted">
-                      Primary exit
+              <div className="mt-6">
+                {guestDemoMode ? (
+                  <DemoExitMap />
+                ) : (
+                  <div className="rounded-2xl border border-border bg-surface/80 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.24em] text-text-muted">
+                          Live route placeholder
+                        </div>
+                        <div className="mt-1 text-lg font-semibold text-text-primary">
+                          Waiting for map feed
+                        </div>
+                      </div>
+                      <Badge variant="neutral">Not demo mode</Badge>
                     </div>
-                    <div className="mt-1 text-lg font-semibold text-text-primary">
-                      Stairwell B
+
+                    <div className="mt-4 rounded-xl border border-border bg-background px-4 py-5 text-sm text-text-secondary">
+                      The demo floorplan is hidden because guest demo mode is
+                      disabled. Connect the real map source here.
                     </div>
                   </div>
-                  <Badge variant="safe">Clear</Badge>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <LoadingSkeleton variant="bar" className="h-10" />
-                  <LoadingSkeleton variant="bar" className="h-10" />
-                  <LoadingSkeleton variant="bar" className="h-10" />
-                </div>
+                )}
               </div>
             </Card>
 

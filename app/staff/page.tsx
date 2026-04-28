@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   BellRing,
   BrainCircuit,
-  CheckCircle2,
   Clock3,
   Flame,
   Map,
@@ -479,8 +478,7 @@ export default function StaffPage() {
               Command center access gate
             </h1>
             <p className="text-sm text-text-secondary">
-              Enter the staff demo passcode. You can configure it with
-              NEXT_PUBLIC_STAFF_DEMO_PASSCODE.
+              Enter the staff passcode.
             </p>
 
             <input
@@ -529,11 +527,6 @@ export default function StaffPage() {
             <h1 className="mt-3 text-3xl font-extrabold text-text-primary">
               Staff Command Center
             </h1>
-            <p className="mt-2 max-w-3xl text-text-secondary">
-              Unified operations console for Gemini incident synthesis,
-              occupancy intelligence, critical broadcasts, and danger zone
-              control.
-            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -1057,42 +1050,6 @@ export default function StaffPage() {
               </Card>
             ) : null}
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card variant="glass" className="flex items-center gap-3">
-            <CheckCircle2 className="text-safe-light" />
-            <div>
-              <div className="text-sm font-semibold text-text-primary">
-                Auth + Layout
-              </div>
-              <div className="text-xs text-text-muted">
-                Sidebar and crisis header active
-              </div>
-            </div>
-          </Card>
-          <Card variant="glass" className="flex items-center gap-3">
-            <BrainCircuit className="text-brand-light" />
-            <div>
-              <div className="text-sm font-semibold text-text-primary">
-                Gemini Pulse
-              </div>
-              <div className="text-xs text-text-muted">
-                Synthesis API wired with incident cards
-              </div>
-            </div>
-          </Card>
-          <Card variant="glass" className="flex items-center gap-3">
-            <Siren className="text-warning-light" />
-            <div>
-              <div className="text-sm font-semibold text-text-primary">
-                Broadcast + Zones
-              </div>
-              <div className="text-xs text-text-muted">
-                Alerting and hazard CRUD available
-              </div>
-            </div>
-          </Card>
         </div>
       </div>
     </main>

@@ -119,13 +119,18 @@ export default function BatteryAwareLocationTracker() {
     <Card variant="glass" hover className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-text-primary">Battery-optimized location tracking</h3>
-          <p className="text-sm text-text-secondary">
-            Periodic position updates adapt to battery state and data-saver mode.
-          </p>
+          <h3 className="text-lg font-bold text-text-primary">
+            location tracking
+          </h3>
         </div>
         <Badge
-          variant={effectiveTrackingState === "error" ? "danger" : enabled ? "safe" : "neutral"}
+          variant={
+            effectiveTrackingState === "error"
+              ? "danger"
+              : enabled
+                ? "safe"
+                : "neutral"
+          }
         >
           {cadenceLabel}
         </Badge>
@@ -153,19 +158,25 @@ export default function BatteryAwareLocationTracker() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-surface px-4 py-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Mode</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
+            Mode
+          </div>
           <div className="mt-1 text-sm font-semibold text-text-primary">
             {enabled ? (lowPowerMode ? "Battery saver" : "Live") : "Paused"}
           </div>
         </div>
         <div className="rounded-xl border border-border bg-surface px-4 py-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Accuracy</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
+            Accuracy
+          </div>
           <div className="mt-1 text-sm font-semibold text-text-primary">
             {fix ? `±${Math.round(fix.accuracy)}m` : "Waiting"}
           </div>
         </div>
         <div className="rounded-xl border border-border bg-surface px-4 py-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Fix</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
+            Fix
+          </div>
           <div className="mt-1 text-sm font-semibold text-text-primary">
             {fix ? new Date(fix.timestamp).toLocaleTimeString() : "None"}
           </div>
