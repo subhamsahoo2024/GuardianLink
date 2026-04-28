@@ -103,6 +103,7 @@ export default function StaffPage() {
   const [dangerZones, setDangerZones] = useState<DangerZone[]>([]);
   const [selectedFloor, setSelectedFloor] = useState(4);
   const [mapInitFailed, setMapInitFailed] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [clickedPoint, setClickedPoint] = useState<{
     lat: number;
     lng: number;
@@ -115,6 +116,9 @@ export default function StaffPage() {
     "all" | "staff" | "guests"
   >("all");
   const [broadcastBusy, setBroadcastBusy] = useState(false);
+  const [synthCooldownMessage, setSynthCooldownMessage] = useState<
+    string | null
+  >(null);
 
   const [zoneLabel, setZoneLabel] = useState("");
   const [zoneSeverity, setZoneSeverity] =
@@ -126,6 +130,7 @@ export default function StaffPage() {
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const leafletModuleRef = useRef<LeafletModule | null>(null);
   const mapDrawnObjectsRef = useRef<RemovableLayer[]>([]);
+  const lastSynthesisTimeRef = useRef<number>(0);
 
   const selectedIncident = useMemo(
     () =>
@@ -214,6 +219,9 @@ export default function StaffPage() {
 
     async function initMap() {
       try {
+        // Dynamically import Leaflet CSS to ensure it loads in production
+        await import("leaflet/dist/leaflet.css");
+
         const L = await import("leaflet");
         leafletModuleRef.current = L;
         if (!mounted || !mapRef.current) return;
@@ -234,7 +242,13 @@ export default function StaffPage() {
           setClickedPoint({ lat: evt.latlng.lat, lng: evt.latlng.lng });
           setActiveSection("danger-zones");
         });
-      } catch {
+
+        setMapError(null);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error("Map initialization failed:", errorMessage);
+        setMapError(errorMessage);
         setMapInitFailed(true);
       }
     }
@@ -311,54 +325,7 @@ export default function StaffPage() {
       activeSection === "overview" || activeSection === "heatmap";
     if (!authenticated || !heatmapVisible || !mapRef.current) return;
 
-    const currentMap = mapInstanceRef.current as
-      | ({
-          invalidateSize?: () => void;
-          remove?: () => void;
-          _container?: unknown;
-        } & LeafletMap)
-      | null;
-
-    if (
-      currentMap &&
-      currentMap._container &&
-      currentMap._container !== mapRef.current
-    ) {
-      currentMap.remove?.();
-      mapInstanceRef.current = null;
-      mapDrawnObjectsRef.current = [];
-    }
-
-    async function ensureMapBoundToCurrentContainer() {
-      if (!mapRef.current) return;
-
-      if (!leafletModuleRef.current) {
-        leafletModuleRef.current = await import("leaflet");
-      }
-
-      const L = leafletModuleRef.current;
-      if (!L || mapInstanceRef.current || !mapRef.current) return;
-
-      mapInstanceRef.current = L.map(mapRef.current, {
-        center: [40.7582, -73.9855],
-        zoom: 19,
-        zoomControl: false,
-      });
-
-      L.tileLayer(osmTileUrl, {
-        attribution: "&copy; OpenStreetMap contributors",
-        maxZoom: 20,
-      }).addTo(mapInstanceRef.current);
-
-      mapInstanceRef.current.on("click", (evt) => {
-        if (!evt.latlng) return;
-        setClickedPoint({ lat: evt.latlng.lat, lng: evt.latlng.lng });
-        setActiveSection("danger-zones");
-      });
-    }
-
-    void ensureMapBoundToCurrentContainer();
-
+    // Only invalidate size to refresh map display when section becomes visible
     const timer = window.setTimeout(() => {
       const map = mapInstanceRef.current as
         | ({ invalidateSize?: () => void } & LeafletMap)
@@ -372,13 +339,30 @@ export default function StaffPage() {
   }, [activeSection, authenticated]);
 
   async function handleSynthesize() {
+    const now = Date.now();
+    const ONE_HOUR_MS = 3600000; // 1 hour in milliseconds
+    const timeSinceLastSynthesis = now - lastSynthesisTimeRef.current;
+
+    // Rate limit to once per hour
+    if (timeSinceLastSynthesis < ONE_HOUR_MS) {
+      const minutesRemaining = Math.ceil(
+        (ONE_HOUR_MS - timeSinceLastSynthesis) / 60000,
+      );
+      const cooldownMsg = `Gemini synthesis on cooldown. Next available in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. (Max once per hour to avoid rate limits.)`;
+      setSynthCooldownMessage(cooldownMsg);
+      setTimeout(() => setSynthCooldownMessage(null), 5000);
+      return;
+    }
+
     setSynthBusy(true);
+    setSynthCooldownMessage(null);
     try {
       await fetch("/api/incidents/synthesize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
+      lastSynthesisTimeRef.current = now;
       await refreshIncidents();
       setActiveSection("incidents");
     } finally {
@@ -546,6 +530,9 @@ export default function StaffPage() {
               Back home
             </Link>
           </div>
+          {synthCooldownMessage ? (
+            <p className="text-sm text-warning-light">{synthCooldownMessage}</p>
+          ) : null}
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -737,8 +724,12 @@ export default function StaffPage() {
                   <div ref={mapRef} className="h-full w-full" />
                 </div>
                 {mapInitFailed ? (
-                  <p className="text-sm text-warning-light">
-                    Map failed to initialize. Check network and tile access.
+                  <p className="text-sm text-danger-light">
+                    Map failed to initialize
+                    {mapError
+                      ? `: ${mapError}`
+                      : ". Check network and tile access."}
+                    .
                   </p>
                 ) : null}
 

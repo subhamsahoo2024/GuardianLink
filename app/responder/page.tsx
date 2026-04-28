@@ -101,6 +101,7 @@ export default function ResponderPage() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [recordingAudio, setRecordingAudio] = useState(false);
   const [mapInitFailed, setMapInitFailed] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
@@ -207,6 +208,9 @@ export default function ResponderPage() {
 
     async function initMap() {
       try {
+        // Dynamically import Leaflet CSS to ensure it loads in production
+        await import("leaflet/dist/leaflet.css");
+
         const L = await import("leaflet");
         leafletModuleRef.current = L;
         if (!mounted || !mapRef.current) return;
@@ -236,7 +240,17 @@ export default function ResponderPage() {
             },
           ]);
         });
-      } catch {
+
+        setMapError(null);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error(
+          "Responder map initialization failed:",
+          errorMessage,
+          error,
+        );
+        setMapError(errorMessage);
         setMapInitFailed(true);
       }
     }
@@ -727,8 +741,12 @@ export default function ResponderPage() {
             </div>
 
             {mapInitFailed ? (
-              <p className="text-sm text-warning-light">
-                Map failed to initialize. Check network and tile access.
+              <p className="text-sm text-danger-light">
+                Map failed to initialize
+                {mapError
+                  ? `: ${mapError}`
+                  : ". Check network and tile access."}
+                .
               </p>
             ) : null}
           </Card>

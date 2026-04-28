@@ -16,7 +16,7 @@ import {
   Tablet,
   QrCode,
 } from "lucide-react";
-import AlertBanner from "./_components/ui/AlertBanner";
+
 import Badge from "./_components/ui/Badge";
 import Card from "./_components/ui/Card";
 
