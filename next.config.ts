@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://res.cloudinary.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://lh3.googleusercontent.com; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://translation.googleapis.com https://generativelanguage.googleapis.com; worker-src 'self' blob:; media-src 'self' blob: data:;`,
+            value: `default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://res.cloudinary.com https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org https://lh3.googleusercontent.com; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://translation.googleapis.com https://generativelanguage.googleapis.com https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; worker-src 'self' blob:; media-src 'self' blob: data:;`,
           },
         ],
       },
@@ -78,7 +78,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self'",
+            value:
+              "default-src 'self'; script-src 'self'; connect-src 'self' https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; img-src 'self' data: blob: https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org;",
           },
         ],
       },
