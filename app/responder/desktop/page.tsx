@@ -63,9 +63,15 @@ const MOCK_GUEST_DIALOGUES: Record<string, Array<{ guest: string; english: strin
   ]
 };
 
+const demoBypassEnabled = process.env.NEXT_PUBLIC_RESPONDER_DEMO_BYPASS !== "false";
+const demoPasscode = process.env.NEXT_PUBLIC_RESPONDER_DEMO_PASSCODE || "guardian-responder-demo";
+
 export default function DesktopCommanderDashboard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [authenticated, setAuthenticated] = useState(demoBypassEnabled);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [authError, setAuthError] = useState("");
 
   // Core system state
   const [rooms, setRooms] = useState<RoomRecord[]>([]);
@@ -146,6 +152,11 @@ export default function DesktopCommanderDashboard() {
   // Mount effect and polling
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    
     fetchData();
     
     // Poll data every 4 seconds
@@ -154,7 +165,16 @@ export default function DesktopCommanderDashboard() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [authenticated]);
+
+  const handleAuthSubmit = () => {
+    if (passcodeInput === demoPasscode) {
+      setAuthenticated(true);
+      setAuthError("");
+    } else {
+      setAuthError("Incorrect system passcode. Access denied.");
+    }
+  };
 
   // Fetch active session messages when session changes or room is loaded
   const fetchSessionMessages = async (sessionId: string) => {
@@ -401,6 +421,36 @@ export default function DesktopCommanderDashboard() {
   }, [rooms, activeTab, selectedFloor]);
 
   if (!mounted) return null;
+
+  if (!authenticated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white font-sans">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-extrabold text-white font-mono tracking-wider">GuardianLink Commander Portal</h1>
+            <p className="mt-1 text-sm text-slate-400">Authorize responder credentials for tactical access.</p>
+          </div>
+          <div className="space-y-4 p-6 bg-slate-900/60 border border-slate-800 rounded-2xl backdrop-blur-md">
+            <input
+              value={passcodeInput}
+              onChange={(e) => setPasscodeInput(e.target.value)}
+              type="password"
+              placeholder="Enter passcode"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-slate-700"
+              onKeyDown={(e) => e.key === "Enter" && handleAuthSubmit()}
+            />
+            {authError && <p className="text-xs text-rose-500 font-mono">{authError}</p>}
+            <button
+              onClick={handleAuthSubmit}
+              className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white border border-cyan-500/20 text-xs font-mono font-bold rounded-xl transition duration-150 flex items-center justify-center cursor-pointer"
+            >
+              Unlock Dashboard
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-slate-950 text-slate-100 font-sans select-none select-none">

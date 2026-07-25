@@ -4,14 +4,6 @@
 
 ---
 
-## 📽️ Demo Video
-
-_[Insert YouTube/Vimeo Link Here]_
-
-> **Top 1% Tip:** Your video should highlight the "Zero-Install" PWA and the Gemini AI triage in action.
-
----
-
 ## 📌 Problem Statement
 
 Global hospitality venues face high-stakes emergencies where information is siloed. In a crisis, guests lack local apps, staff are overwhelmed by duplicate reports, and first responders are "blind" once they enter large, complex buildings.
@@ -92,10 +84,3 @@ Our project is built to directly address the United Nations Sustainable Developm
 - **SDG 11 (Sustainable Cities & Communities):** Strengthening disaster resilience in urban tourism hubs.
 
 ---
-
-## 👥 The Team
-
-- **Subham Sahoo S** - _Lead Developer_
-- **Sriram B** - _AI Engineer_
-- **Thejas SB** - _UI/UX & GIS_
-- **Mahathi M** - _Backend Developer_

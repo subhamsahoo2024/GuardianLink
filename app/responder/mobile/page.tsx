@@ -60,9 +60,15 @@ const MOCK_GUEST_DIALOGUES: Record<string, Array<{ guest: string; english: strin
   ]
 };
 
+const demoBypassEnabled = process.env.NEXT_PUBLIC_RESPONDER_DEMO_BYPASS !== "false";
+const demoPasscode = process.env.NEXT_PUBLIC_RESPONDER_DEMO_PASSCODE || "guardian-responder-demo";
+
 export default function MobileTacticalHub() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [authenticated, setAuthenticated] = useState(demoBypassEnabled);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [authError, setAuthError] = useState("");
 
   // Bottom Navigation tabs (Map | Triage | Comms)
   const [activeTab, setActiveTab] = useState<"map" | "triage" | "comms">("map");
@@ -123,6 +129,11 @@ export default function MobileTacticalHub() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
+
     fetchData();
 
     const interval = setInterval(() => {
@@ -130,7 +141,16 @@ export default function MobileTacticalHub() {
     }, 4500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [authenticated]);
+
+  const handleAuthSubmit = () => {
+    if (passcodeInput === demoPasscode) {
+      setAuthenticated(true);
+      setAuthError("");
+    } else {
+      setAuthError("Incorrect system passcode. Access denied.");
+    }
+  };
 
   // Fetch session message transcripts
   const fetchSessionMessages = async (sessionId: string) => {
@@ -339,6 +359,38 @@ export default function MobileTacticalHub() {
   }, [rooms, selectedFloor]);
 
   if (!mounted) return null;
+
+  if (!authenticated) {
+    return (
+      <main className="flex h-[100dvh] w-full flex-col items-center justify-center bg-slate-950 px-6 text-white font-sans select-none">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center">
+            <h1 className="text-xl font-black tracking-widest text-slate-200 uppercase font-mono">
+              TACTICAL COM BRIDGE
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">Authorize responder passcode for field access.</p>
+          </div>
+          <div className="space-y-4 p-5 bg-slate-900/40 border border-slate-900 rounded-2xl">
+            <input
+              value={passcodeInput}
+              onChange={(e) => setPasscodeInput(e.target.value)}
+              type="password"
+              placeholder="Passcode Required"
+              className="w-full h-12 rounded-xl border border-slate-800 bg-slate-950 px-4 text-sm text-white outline-none focus:border-slate-800"
+              onKeyDown={(e) => e.key === "Enter" && handleAuthSubmit()}
+            />
+            {authError && <p className="text-xs text-rose-500 font-mono">{authError}</p>}
+            <button
+              onClick={handleAuthSubmit}
+              className="w-full h-12 bg-cyan-950 hover:bg-cyan-900 border border-cyan-800/60 text-xs font-mono font-bold rounded-xl text-cyan-400 transition"
+            >
+              UNLOCK HUB
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <div className="h-[100dvh] w-full flex flex-col overflow-hidden bg-slate-950 text-slate-100 select-none select-none font-sans">
