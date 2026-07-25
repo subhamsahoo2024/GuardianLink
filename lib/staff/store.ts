@@ -291,6 +291,41 @@ export function deleteBroadcast(id: string): boolean {
   return broadcasts.length < before;
 }
 
+export function updateGuestStatus(
+  roomId: string,
+  status: "checking" | "evacuated" | "trapped" | "no_response"
+): boolean {
+  let guest = guests.find((g) => g.roomId === roomId);
+  
+  if (!guest) {
+    if (status === "checking") return true;
+    
+    const floor = Number(roomId.charAt(0)) || 2;
+    const newGuest: GuestPresence = {
+      id: `g-${Date.now()}`,
+      roomId,
+      floor,
+      lat: 40.75805 + (floor - 2) * 0.00017,
+      lng: -73.98575 + (floor - 2) * 0.00008,
+      status: status === "evacuated" ? "safe" : status === "trapped" ? "needs_help" : "no_response",
+      updatedAt: new Date().toISOString(),
+    };
+    guests.push(newGuest);
+    return true;
+  }
+  
+  if (status === "checking") {
+    const idx = guests.indexOf(guest);
+    if (idx > -1) {
+      guests.splice(idx, 1);
+    }
+  } else {
+    guest.status = status === "evacuated" ? "safe" : status === "trapped" ? "needs_help" : "no_response";
+    guest.updatedAt = new Date().toISOString();
+  }
+  return true;
+}
+
 if (incidents.length === 0) {
   incidents = [
     {
