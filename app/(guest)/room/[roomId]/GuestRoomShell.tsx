@@ -72,6 +72,11 @@ export default function GuestRoomShell() {
 
   const handleMediaCapture = async (type: 'video' | 'audio') => {
     try {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Media capture requires a secure HTTPS connection or localhost. Accessing over a local IP via HTTP blocks camera/microphone access in modern browsers.");
+        return;
+      }
+
       if (type === 'video') setIsRecordingVideo(true);
       if (type === 'audio') setIsRecordingAudio(true);
 
