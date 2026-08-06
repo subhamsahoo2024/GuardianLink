@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       const formData = await req.formData();
       sourceLang = (formData.get("sourceLang") as string) || "en";
       targetLang = (formData.get("targetLang") as string) || "es";
-      
+
       const payload = formData.get("payload");
       if (payload instanceof Blob) {
         fileBlob = payload;
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       try {
         // Try meta-llama/llama-4-scout-17b-16e-instruct first
         const completion = await groq.chat.completions.create({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          model: "openai/gpt-oss-20b",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: textToTranslate },

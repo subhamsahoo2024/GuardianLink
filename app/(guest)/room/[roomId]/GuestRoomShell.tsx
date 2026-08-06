@@ -4,6 +4,7 @@ import { AlertTriangle, MapPinned, Mic, Video, Camera, Loader2 } from "lucide-re
 import { useRoomContext } from "./RoomContext";
 import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
+import GuestCommsDrawer from "./GuestCommsDrawer";
 // Ensure this path matches your actual Firebase config file
 import { db } from "@/lib/firebase";
 import { collection, addDoc, doc, onSnapshot } from "firebase/firestore";
@@ -112,6 +113,8 @@ export default function GuestRoomShell() {
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"idle" | "connecting" | "live">("idle");
+  const [messages, setMessages] = useState<any[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -203,6 +206,140 @@ export default function GuestRoomShell() {
     }
   };
 
+  const handleSosTrigger = () => {
+    setStatus("needs-help");
+    setConnectionStatus("connecting");
+
+    // Simulate connection after 2 seconds
+    setTimeout(() => {
+      setConnectionStatus("live");
+      setMessages([
+        {
+          id: "system-1",
+          speaker: "system",
+          text: "Tactical connection secure. Encryption handshake complete.",
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: "msg-1",
+          speaker: "responder",
+          text: "This is Emergency Command. We have visual and room telemetry bound to your device. Report your status.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }, 2000);
+  };
+
+  const handleSendText = async (text: string) => {
+    const nextMsg = {
+      id: `msg-guest-${Date.now()}`,
+      speaker: "guest" as const,
+      text: text,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, nextMsg]);
+
+    try {
+      // Trigger API translator to overlay translation in Spanish
+      const res = await fetch("/api/translator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceLang: "en",
+          targetLang: "es",
+          payload: text,
+        }),
+      });
+      const data = await res.json();
+      if (data.translatedText) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === nextMsg.id ? { ...m, translatedText: data.translatedText } : m)),
+        );
+      }
+    } catch (e) {
+      console.warn("Translation failed:", e);
+    }
+
+    // Trigger mock reply from commander
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-rep-${Date.now()}`,
+          speaker: "responder",
+          text: "Crisis Command copy that. Search teams are navigating the corridor. Stand by.",
+          translatedText: "Copia del comando de crisis. Los equipos de búsqueda están navegando por el pasillo. Manténgase a la espera.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }, 2000);
+  };
+
+  const handleSendVoice = async (blob: Blob) => {
+    const tempId = `msg-voice-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        speaker: "guest",
+        text: "Audio message transmitting...",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    try {
+      const formData = new FormData();
+      formData.append("sourceLang", "en");
+      formData.append("targetLang", "es");
+      formData.append("payload", blob, "audio.webm");
+
+      const res = await fetch("/api/translator", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.originalText && data.translatedText) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId
+               ? { ...m, text: data.originalText, translatedText: data.translatedText }
+              : m,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Audio upload error:", err);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, text: "Audio transmission failed." } : m)),
+      );
+    }
+
+    // Trigger responder reply
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-rep-${Date.now()}`,
+          speaker: "responder",
+          text: "Received audio signal. Stay low and block doors against smoke ingress.",
+          translatedText: "Señal de audio recibida. Permanezca agachado y bloquee las puertas contra el ingreso de humo.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }, 2500);
+  };
+
+  const handleSendDetail = (label: string) => {
+    handleSendText(`Reported status detail: ${label}`);
+  };
+
+  const handleDisconnect = () => {
+    setConnectionStatus("idle");
+    setMessages([]);
+    setStatus("awaiting");
+  };
+
   const statusColor = status === "needs-help" ? "bg-red-500" : status === "evacuated" ? "bg-green-500" : "bg-yellow-500";
 
   return (
@@ -250,7 +387,7 @@ export default function GuestRoomShell() {
 
           {/* Primary Row: SOS Button */}
           <button
-            onClick={() => setStatus("needs-help")}
+            onClick={handleSosTrigger}
             className={`w-full flex items-center justify-center min-h-[80px] rounded-[1.5rem] text-white font-black text-3xl transition-all active:scale-95 shadow-xl border-2 ${status === "needs-help"
                 ? "bg-red-700 border-red-500 ring-4 ring-red-500/30"
                 : "bg-red-600 active:bg-red-700 border-red-500/50"
@@ -296,6 +433,15 @@ export default function GuestRoomShell() {
 
         </div>
       </footer>
+
+      <GuestCommsDrawer
+        connectionStatus={connectionStatus}
+        messages={messages}
+        onSendText={handleSendText}
+        onSendVoice={handleSendVoice}
+        onSendDetail={handleSendDetail}
+        onDisconnect={handleDisconnect}
+      />
     </div>
   );
 }
