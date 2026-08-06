@@ -3,9 +3,21 @@
 import { AlertTriangle, MapPinned, Mic, Video, Camera, Loader2 } from "lucide-react";
 import { useRoomContext } from "./RoomContext";
 import { useEffect, useState, useRef } from "react";
+import dynamic from "next/dynamic";
 // Ensure this path matches your actual Firebase config file
 import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, onSnapshot } from "firebase/firestore";
+
+// Dynamically import client-only GuestMap to prevent SSR errors
+const GuestMap = dynamic(() => import("./GuestMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-slate-950 text-slate-400">
+      <Loader2 className="mr-2 h-6 w-6 animate-spin text-cyan-400" />
+      Loading Tactical Layout...
+    </div>
+  )
+});
 
 function DemoExitMap() {
   return (
@@ -52,10 +64,51 @@ function DemoExitMap() {
 }
 
 export default function GuestRoomShell() {
-  const { roomId, status, setStatus } = useRoomContext();
+  const { roomId, floor, status, setStatus } = useRoomContext();
   const guestDemoMode = process.env.NEXT_PUBLIC_GUEST_DEMO_MODE !== "false";
 
   const [pulse, setPulse] = useState(true);
+  const [floorPlanUrl, setFloorPlanUrl] = useState<string | null>(null);
+  const [nodes, setNodes] = useState<any[]>([]);
+  const [loadingMap, setLoadingMap] = useState(true);
+
+  useEffect(() => {
+    if (!floor) {
+      setLoadingMap(false);
+      return;
+    }
+    setLoadingMap(true);
+    const planRef = doc(db, "floor_plans", `floor_${floor}`);
+    const planUnsub = onSnapshot(planRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setFloorPlanUrl(docSnap.data().secureUrl || null);
+      } else {
+        setFloorPlanUrl(null);
+      }
+      setLoadingMap(false);
+    }, (err) => {
+      console.warn("Firestore plans subscription failed:", err);
+      setFloorPlanUrl(null);
+      setLoadingMap(false);
+    });
+
+    const nodesRef = doc(db, "floor_nodes", `floor_${floor}`);
+    const nodesUnsub = onSnapshot(nodesRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setNodes(docSnap.data().nodes || []);
+      } else {
+        setNodes([]);
+      }
+    }, (err) => {
+      console.warn("Firestore nodes subscription failed:", err);
+      setNodes([]);
+    });
+
+    return () => {
+      planUnsub();
+      nodesUnsub();
+    };
+  }, [floor]);
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -163,8 +216,15 @@ export default function GuestRoomShell() {
       </header>
 
       {/* Full-bleed Map Body */}
-      <main className="flex-1 relative w-full h-full">
-        {guestDemoMode ? (
+      <main className="flex-1 relative w-full h-full min-h-[300px]">
+        {loadingMap ? (
+          <div className="absolute inset-0 bg-neutral-950 flex flex-col items-center justify-center gap-4 z-20">
+            <Loader2 className="h-12 w-12 text-cyan-500 animate-spin" />
+            <span className="text-cyan-500 font-medium font-mono text-xs tracking-wider animate-pulse">ESTABLISHING TACTICAL COM LINK...</span>
+          </div>
+        ) : floorPlanUrl ? (
+          <GuestMap floorPlanUrl={floorPlanUrl} nodes={nodes} roomId={roomId} />
+        ) : guestDemoMode ? (
           <DemoExitMap />
         ) : (
           <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center gap-4">

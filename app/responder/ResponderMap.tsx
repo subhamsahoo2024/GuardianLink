@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -10,9 +10,12 @@ import {
   Polygon,
   CircleMarker,
   Tooltip,
+  ImageOverlay,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { RoomRecord } from "@/lib/responder/types";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 // Configure default Leaflet icons cleanly for modern browsers
 let leafletIconsConfigured = false;
@@ -62,9 +65,25 @@ export default function ResponderMap({
   layerToggles,
   compact = false,
 }: ResponderMapProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
   useEffect(() => {
     configureLeafletIcons();
   }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "floor_plans", `floor_${floor}`), (docSnap) => {
+      if (docSnap.exists()) {
+        setImageUrl(docSnap.data().secureUrl || null);
+      } else {
+        setImageUrl(null);
+      }
+    }, (err) => {
+      console.warn("Firestore error fetching floor plan:", err);
+      setImageUrl(null);
+    });
+    return () => unsub();
+  }, [floor]);
 
   // Filter rooms for the active floor
   const floorRooms = useMemo(
@@ -108,37 +127,43 @@ export default function ResponderMap({
         className="w-full h-full bg-slate-950 text-slate-900"
         style={{ background: "#020617" }}
       >
-        {/* Outer Building Structural Wall Outline */}
-        <Polygon
-          positions={[
-            [50, 50],
-            [850, 50],
-            [850, 950],
-            [50, 950],
-          ]}
-          pathOptions={{
-            color: "#334155",
-            weight: 6,
-            fillColor: "#0f172a",
-            fillOpacity: 0.9,
-          }}
-        />
+        {imageUrl ? (
+          <ImageOverlay url={imageUrl} bounds={bounds} />
+        ) : (
+          <>
+            {/* Outer Building Structural Wall Outline */}
+            <Polygon
+              positions={[
+                [50, 50],
+                [850, 50],
+                [850, 950],
+                [50, 950],
+              ]}
+              pathOptions={{
+                color: "#334155",
+                weight: 6,
+                fillColor: "#0f172a",
+                fillOpacity: 0.9,
+              }}
+            />
 
-        {/* Central North-South Main Corridor */}
-        <Polygon
-          positions={[
-            [100, 440],
-            [800, 440],
-            [800, 560],
-            [100, 560],
-          ]}
-          pathOptions={{
-            color: "#1e293b",
-            weight: 2,
-            fillColor: "#1e293b",
-            fillOpacity: 0.5,
-          }}
-        />
+            {/* Central North-South Main Corridor */}
+            <Polygon
+              positions={[
+                [100, 440],
+                [800, 440],
+                [800, 560],
+                [100, 560],
+              ]}
+              pathOptions={{
+                color: "#1e293b",
+                weight: 2,
+                fillColor: "#1e293b",
+                fillOpacity: 0.5,
+              }}
+            />
+          </>
+        )}
 
         {/* Blocked Routes / Hazard Barrier Overlay */}
         {layerToggles.hazardRoutes && (

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { listAiAuditEntries } from "@/lib/ai/audit";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const limit = Number(searchParams.get("limit")) || 50;
-
+export async function GET() {
   return NextResponse.json({
-    entries: listAiAuditEntries(limit),
+    status: "success",
+    message: "AI Engine Offline - Awaiting Groq Integration",
+    data: null,
   });
 }

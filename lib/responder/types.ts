@@ -61,6 +61,7 @@ export interface BridgeMessage {
   id: string;
   speaker: "responder" | "guest" | "system";
   text: string;
+  translatedText?: string;
   createdAt: string;
   translated: boolean;
 }

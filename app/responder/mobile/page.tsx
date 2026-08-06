@@ -104,6 +104,8 @@ export default function MobileTacticalHub() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const pttTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // Load backend store data
   const fetchData = async (showProgress = false) => {
@@ -166,7 +168,8 @@ export default function MobileTacticalHub() {
   };
 
   // Bind or join live communication link
-  const handleLinkComms = async (roomId: string, switchView = true) => {
+  const handleLinkComms = async (roomId: string, switchView = true, forcedLanguage?: string) => {
+    const targetLang = forcedLanguage || guestLanguage;
     try {
       const listRes = await fetch("/api/responder/live-session");
       const listData = await listRes.json();
@@ -176,14 +179,14 @@ export default function MobileTacticalHub() {
 
       if (existing) {
         setActiveSession(existing);
-        setGuestLanguage(existing.guestLanguage || "es");
+        setGuestLanguage(forcedLanguage || existing.guestLanguage || "es");
         await fetchSessionMessages(existing.sessionId);
       } else {
         // Create new session via API POST
         const createRes = await fetch("/api/responder/live-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId, guestLanguage }),
+          body: JSON.stringify({ roomId, guestLanguage: targetLang }),
         });
         const createData = await createRes.json();
         if (createData.session) {
@@ -192,7 +195,7 @@ export default function MobileTacticalHub() {
             {
               id: "system-1",
               speaker: "system",
-              text: `Bridge connection established with Room ${roomId} (${LANGUAGES.find(l => l.code === guestLanguage)?.label || "Spanish"})`,
+              text: `Bridge connection established with Room ${roomId} (${LANGUAGES.find(l => l.code === targetLang)?.label || "Spanish"})`,
               createdAt: new Date().toISOString(),
               translated: false,
             }
@@ -248,7 +251,7 @@ export default function MobileTacticalHub() {
     }
   }, [messages, activeTab]);
 
-  // Submit and translate messages
+  // Message Send & translation via Groq
   const handleSendMessage = async (customText?: string) => {
     const textToSend = (customText || responderText).trim();
     if (!textToSend || !activeSession) return;
@@ -257,28 +260,79 @@ export default function MobileTacticalHub() {
     if (!customText) setResponderText("");
 
     try {
-      const res = await fetch("/api/responder/live-session/translate", {
+      const res = await fetch("/api/translator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId: activeSession.sessionId,
-          text: textToSend,
-          targetLanguage: guestLanguage,
+          sourceLang: "en",
+          targetLang: guestLanguage,
+          payload: textToSend,
         }),
       });
       const data = await res.json();
       
-      if (data.messages) {
+      if (data.originalText || data.translatedText) {
+        const newMsg: BridgeMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          speaker: "responder",
+          text: data.originalText || textToSend,
+          translatedText: data.translatedText,
+          createdAt: new Date().toISOString(),
+          translated: false,
+        };
+
         setMessages(prev => {
           const filtered = prev.filter(m => m.id !== "system-1" && m.id !== "empty-prompt");
-          return [...filtered, ...data.messages];
+          return [...filtered, newMsg];
         });
 
-        // Trigger guest reply loop
+        // Trigger simulated guest responses to show active dynamic conversation
         simulateGuestReply();
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Failed sending message:", error);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  // Audio Message Send & transcription/translation via Groq
+  const handleSendAudio = async (blob: Blob) => {
+    if (!activeSession) return;
+
+    setSendingMessage(true);
+    try {
+      const formData = new FormData();
+      formData.append("sourceLang", "en");
+      formData.append("targetLang", guestLanguage);
+      formData.append("payload", blob, "audio.webm");
+
+      const res = await fetch("/api/translator", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.originalText || data.translatedText) {
+        const newMsg: BridgeMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          speaker: "responder",
+          text: data.originalText || "Audio message transmitted.",
+          translatedText: data.translatedText,
+          createdAt: new Date().toISOString(),
+          translated: false,
+        };
+
+        setMessages(prev => {
+          const filtered = prev.filter(m => m.id !== "system-1" && m.id !== "empty-prompt");
+          return [...filtered, newMsg];
+        });
+
+        // Trigger simulated guest responses to show active dynamic conversation
+        simulateGuestReply();
+      }
+    } catch (error) {
+      console.error("Failed sending audio message:", error);
     } finally {
       setSendingMessage(false);
     }
@@ -320,8 +374,8 @@ export default function MobileTacticalHub() {
     }, 1800);
   };
 
-  // Microphone PTT triggers
-  const handlePttStart = (e: React.SyntheticEvent) => {
+  // Microphone PTT triggers using MediaRecorder API
+  const handlePttStart = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsHoldingPtt(true);
     setPttHoldTime(0);
@@ -329,6 +383,35 @@ export default function MobileTacticalHub() {
     pttTimerRef.current = setInterval(() => {
       setPttHoldTime(p => p + 1);
     }, 100);
+
+    try {
+      if (typeof window !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            chunksRef.current.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          // Shut down microphone stream tracks
+          stream.getTracks().forEach(track => track.stop());
+
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          if (blob.size > 0) {
+            await handleSendAudio(blob);
+          }
+        };
+
+        mediaRecorder.start();
+      }
+    } catch (err) {
+      console.error("Error accessing microphone for mobile PTT:", err);
+    }
   };
 
   const handlePttEnd = () => {
@@ -337,19 +420,24 @@ export default function MobileTacticalHub() {
       clearInterval(pttTimerRef.current);
     }
 
-    if (pttHoldTime > 5 && selectedRoomId) {
-      const room = rooms.find(r => r.roomId === selectedRoomId);
-      let pttText = "Commander Audio Broadcast: Maintain absolute position, rescue teams have been dispatched.";
-      
-      if (room?.status === "trapped") {
-        pttText = "Crisis command note: Evacuation path is blocked by flame. Remain inside and seal entry door cracks.";
-      } else if (room?.status === "checking") {
-        pttText = "Crisis command request: Verify if all building occupants are ready for exit.";
-      } else if (room?.status === "evacuated") {
-        pttText = "Crisis command directive: Remain outside building boundary at assembly sector alpha.";
-      }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    } else {
+      // Fallback text broadcast if mic not available or hold too short
+      if (pttHoldTime > 5 && selectedRoomId) {
+        const room = rooms.find(r => r.roomId === selectedRoomId);
+        let pttText = "Commander Audio Broadcast: Maintain absolute position, rescue teams have been dispatched.";
+        
+        if (room?.status === "trapped") {
+          pttText = "Crisis command note: Evacuation path is blocked by flame. Remain inside and seal entry door cracks.";
+        } else if (room?.status === "checking") {
+          pttText = "Crisis command request: Verify if all building occupants are ready for exit.";
+        } else if (room?.status === "evacuated") {
+          pttText = "Crisis command directive: Remain outside building boundary at assembly sector alpha.";
+        }
 
-      handleSendMessage(pttText);
+        handleSendMessage(pttText);
+      }
     }
   };
 
@@ -681,7 +769,7 @@ export default function MobileTacticalHub() {
                     onChange={(e) => {
                       const newLang = e.target.value;
                       setGuestLanguage(newLang);
-                      handleLinkComms(selectedRoomId, true);
+                      handleLinkComms(selectedRoomId, true, newLang);
                     }}
                     className="h-8 max-w-[130px] bg-slate-900 border border-slate-800 rounded px-1 text-[9px] font-mono text-slate-300 focus:outline-none"
                   >
@@ -758,7 +846,16 @@ export default function MobileTacticalHub() {
                               {isResponder ? msg.text : `"${msg.text}"`}
                             </p>
 
-                            {translationMsg && (
+                            {msg.translatedText ? (
+                              <div className="mt-1 pt-1.5 border-t border-slate-900/60 text-[10px]">
+                                <span className="text-[8px] font-mono text-cyan-400 block uppercase font-bold tracking-tight mb-0.5">
+                                  {isResponder ? `[${guestLanguage.toUpperCase()} TRANSLATION]` : "[ENG TRANSLATION]"}
+                                </span>
+                                <p className="font-semibold text-slate-300">
+                                  {msg.translatedText}
+                                </p>
+                              </div>
+                            ) : translationMsg ? (
                               <div className="mt-1 pt-1.5 border-t border-slate-900/60 text-[10px]">
                                 <span className="text-[8px] font-mono text-cyan-400 block uppercase font-bold tracking-tight mb-0.5">
                                   {isResponder ? `[${guestLanguage.toUpperCase()} TRANSLATION]` : "[ENG TRANSLATION]"}
@@ -769,7 +866,7 @@ export default function MobileTacticalHub() {
                                     : translationMsg.text}
                                 </p>
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       );

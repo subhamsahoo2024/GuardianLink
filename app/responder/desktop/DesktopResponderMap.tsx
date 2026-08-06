@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -10,10 +10,13 @@ import {
   Tooltip,
   Popup,
   Polyline,
+  ImageOverlay,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { RoomRecord } from "@/lib/responder/types";
 import { DangerZone } from "@/lib/staff/types";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 // Configure Leaflet default icons
 let leafletIconsConfigured = false;
@@ -92,9 +95,25 @@ export default function DesktopResponderMap({
   dangerZones,
   layerToggles,
 }: DesktopResponderMapProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
   useEffect(() => {
     configureLeafletIcons();
   }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "floor_plans", `floor_${floor}`), (docSnap) => {
+      if (docSnap.exists()) {
+        setImageUrl(docSnap.data().secureUrl || null);
+      } else {
+        setImageUrl(null);
+      }
+    }, (err) => {
+      console.warn("Firestore error fetching floor plan:", err);
+      setImageUrl(null);
+    });
+    return () => unsub();
+  }, [floor]);
 
   const bounds: L.LatLngBoundsExpression = [
     [0, 0],
@@ -135,37 +154,43 @@ export default function DesktopResponderMap({
         className="w-full h-full bg-slate-950 text-slate-100 animate-fade-in"
         style={{ background: "#020617" }}
       >
-        {/* Outer Building Structural Wall Outline */}
-        <Polygon
-          positions={[
-            [50, 50],
-            [850, 50],
-            [850, 950],
-            [50, 950],
-          ]}
-          pathOptions={{
-            color: "#1e293b",
-            weight: 2,
-            fillColor: "#090d16",
-            fillOpacity: 0.95,
-          }}
-        />
+        {imageUrl ? (
+          <ImageOverlay url={imageUrl} bounds={bounds} />
+        ) : (
+          <>
+            {/* Outer Building Structural Wall Outline */}
+            <Polygon
+              positions={[
+                [50, 50],
+                [850, 50],
+                [850, 950],
+                [50, 950],
+              ]}
+              pathOptions={{
+                color: "#1e293b",
+                weight: 2,
+                fillColor: "#090d16",
+                fillOpacity: 0.95,
+              }}
+            />
 
-        {/* Central North-South Main Corridor */}
-        <Polygon
-          positions={[
-            [100, 440],
-            [800, 440],
-            [800, 560],
-            [100, 560],
-          ]}
-          pathOptions={{
-            color: "#0f172a",
-            weight: 1.5,
-            fillColor: "#0f172a",
-            fillOpacity: 0.6,
-          }}
-        />
+            {/* Central North-South Main Corridor */}
+            <Polygon
+              positions={[
+                [100, 440],
+                [800, 440],
+                [800, 560],
+                [100, 560],
+              ]}
+              pathOptions={{
+                color: "#0f172a",
+                weight: 1.5,
+                fillColor: "#0f172a",
+                fillOpacity: 0.6,
+              }}
+            />
+          </>
+        )}
 
         {/* Dynamic Safe Egress Path */}
         {layerToggles.safePaths && (

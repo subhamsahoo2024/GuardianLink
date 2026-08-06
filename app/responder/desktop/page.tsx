@@ -113,6 +113,8 @@ export default function DesktopCommanderDashboard() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const pttTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // Fetch rooms and dashboard data
   const fetchData = async (showProgress = false) => {
@@ -190,8 +192,9 @@ export default function DesktopCommanderDashboard() {
   };
 
   // Initialize or connect to a translation bridge session
-  const handleLinkComms = async (roomId: string) => {
+  const handleLinkComms = async (roomId: string, forcedLanguage?: string) => {
     setLoading(true);
+    const targetLang = forcedLanguage || guestLanguage;
     try {
       // First check if a session already exists for this room
       const sessionListRes = await fetch("/api/responder/live-session");
@@ -202,14 +205,14 @@ export default function DesktopCommanderDashboard() {
 
       if (existing) {
         setActiveSession(existing);
-        setGuestLanguage(existing.guestLanguage || "es");
+        setGuestLanguage(forcedLanguage || existing.guestLanguage || "es");
         await fetchSessionMessages(existing.sessionId);
       } else {
         // Create new session via API
         const createRes = await fetch("/api/responder/live-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId, guestLanguage }),
+          body: JSON.stringify({ roomId, guestLanguage: targetLang }),
         });
         const createData = await createRes.json();
         if (createData.session) {
@@ -218,7 +221,7 @@ export default function DesktopCommanderDashboard() {
             {
               id: "system-1",
               speaker: "system",
-              text: `Bridge connection established with Room ${roomId} (${LANGUAGES.find(l => l.code === guestLanguage)?.label || "Spanish"})`,
+              text: `Bridge connection established with Room ${roomId} (${LANGUAGES.find(l => l.code === targetLang)?.label || "Spanish"})`,
               createdAt: new Date().toISOString(),
               translated: false,
             }
@@ -278,7 +281,7 @@ export default function DesktopCommanderDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Message Send & translation
+  // Message Send & translation via Groq
   const handleSendMessage = async (customText?: string) => {
     const textToSend = (customText || responderText).trim();
     if (!textToSend || !activeSession) return;
@@ -287,23 +290,30 @@ export default function DesktopCommanderDashboard() {
     if (!customText) setResponderText("");
 
     try {
-      const res = await fetch("/api/responder/live-session/translate", {
+      const res = await fetch("/api/translator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId: activeSession.sessionId,
-          text: textToSend,
-          targetLanguage: guestLanguage,
+          sourceLang: "en",
+          targetLang: guestLanguage,
+          payload: textToSend,
         }),
       });
       const data = await res.json();
       
-      if (data.messages) {
-        // Append responder & translated guest messages
+      if (data.originalText || data.translatedText) {
+        const newMsg: BridgeMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          speaker: "responder",
+          text: data.originalText || textToSend,
+          translatedText: data.translatedText,
+          createdAt: new Date().toISOString(),
+          translated: false,
+        };
+
         setMessages(prev => {
-          // Filter out matching mock templates if they clash, keep feed clean
           const filtered = prev.filter(m => m.id !== "system-1" && m.id !== "empty-prompt");
-          return [...filtered, ...data.messages];
+          return [...filtered, newMsg];
         });
 
         // Trigger simulated guest responses to show active dynamic conversation
@@ -311,6 +321,48 @@ export default function DesktopCommanderDashboard() {
       }
     } catch (error) {
       console.error("Failed sending message:", error);
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  // Audio Message Send & transcription/translation via Groq
+  const handleSendAudio = async (blob: Blob) => {
+    if (!activeSession) return;
+
+    setSendingMessage(true);
+    try {
+      const formData = new FormData();
+      formData.append("sourceLang", "en");
+      formData.append("targetLang", guestLanguage);
+      formData.append("payload", blob, "audio.webm");
+
+      const res = await fetch("/api/translator", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.originalText || data.translatedText) {
+        const newMsg: BridgeMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          speaker: "responder",
+          text: data.originalText || "Audio message transmitted.",
+          translatedText: data.translatedText,
+          createdAt: new Date().toISOString(),
+          translated: false,
+        };
+
+        setMessages(prev => {
+          const filtered = prev.filter(m => m.id !== "system-1" && m.id !== "empty-prompt");
+          return [...filtered, newMsg];
+        });
+
+        // Trigger simulated guest responses to show active dynamic conversation
+        simulateGuestReply();
+      }
+    } catch (error) {
+      console.error("Failed sending audio message:", error);
     } finally {
       setSendingMessage(false);
     }
@@ -373,8 +425,8 @@ export default function DesktopCommanderDashboard() {
     }, 1800);
   };
 
-  // Push-To-Talk (PTT) Simulation
-  const handlePttStart = () => {
+  // Push-To-Talk (PTT) using MediaRecorder API
+  const handlePttStart = async () => {
     setIsHoldingPtt(true);
     setPttHoldTime(0);
     
@@ -382,6 +434,35 @@ export default function DesktopCommanderDashboard() {
     pttTimerRef.current = setInterval(() => {
       setPttHoldTime(prev => prev + 1);
     }, 100);
+
+    try {
+      if (typeof window !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            chunksRef.current.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          // Shut down microphone stream tracks
+          stream.getTracks().forEach(track => track.stop());
+
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          if (blob.size > 0) {
+            await handleSendAudio(blob);
+          }
+        };
+
+        mediaRecorder.start();
+      }
+    } catch (err) {
+      console.error("Error accessing microphone for PTT:", err);
+    }
   };
 
   const handlePttEnd = () => {
@@ -390,20 +471,24 @@ export default function DesktopCommanderDashboard() {
       clearInterval(pttTimerRef.current);
     }
 
-    // Determine warning instruction text based on target room status
-    if (pttHoldTime > 5 && selectedRoomId) {
-      const room = rooms.find(r => r.roomId === selectedRoomId);
-      let pttText = "Commander Audio Broadcast: Please hold your position, rescue units are deployed.";
-      
-      if (room?.status === "trapped") {
-        pttText = "This is Crisis Command. Search and rescue teams are climbing to your sector. Keep doors shut and block smoke doors.";
-      } else if (room?.status === "checking") {
-        pttText = "This is Crisis Command. Please verify occupancy logs immediately. Are you secure?";
-      } else if (room?.status === "evacuated") {
-        pttText = "Command notice: Evacuees must remain at Exit Alpha Assembly Point. Do not return inside.";
-      }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    } else {
+      // Fallback text broadcast if mic not available or hold too short
+      if (pttHoldTime > 5 && selectedRoomId) {
+        const room = rooms.find(r => r.roomId === selectedRoomId);
+        let pttText = "Commander Audio Broadcast: Please hold your position, rescue units are deployed.";
+        
+        if (room?.status === "trapped") {
+          pttText = "This is Crisis Command. Search and rescue teams are climbing to your sector. Keep doors shut and block smoke doors.";
+        } else if (room?.status === "checking") {
+          pttText = "This is Crisis Command. Please verify occupancy logs immediately. Are you secure?";
+        } else if (room?.status === "evacuated") {
+          pttText = "Command notice: Evacuees must remain at Exit Alpha Assembly Point. Do not return inside.";
+        }
 
-      handleSendMessage(pttText);
+        handleSendMessage(pttText);
+      }
     }
   };
 
@@ -982,7 +1067,16 @@ export default function DesktopCommanderDashboard() {
                         </p>
                         
                         {/* Nested Translation display */}
-                        {translationMsg && (
+                        {msg.translatedText ? (
+                          <div className="mt-1.5 pt-1.5 border-t border-slate-900/60 text-[10px]">
+                            <span className="text-[9px] font-mono text-cyan-500 block uppercase font-bold tracking-tight mb-0.5">
+                              {isResponder ? `[${guestLanguage.toUpperCase()} TRANSLATION]` : "[ENG TRANSLATION]"}
+                            </span>
+                            <p className="font-semibold text-slate-300">
+                              {msg.translatedText}
+                            </p>
+                          </div>
+                        ) : translationMsg ? (
                           <div className="mt-1.5 pt-1.5 border-t border-slate-900/60 text-[10px]">
                             <span className="text-[9px] font-mono text-cyan-500 block uppercase font-bold tracking-tight mb-0.5">
                               {isResponder ? `[${guestLanguage.toUpperCase()} TRANSLATION]` : "[ENG TRANSLATION]"}
@@ -993,7 +1087,7 @@ export default function DesktopCommanderDashboard() {
                                 : translationMsg.text}
                             </p>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                       <span className="text-[8px] text-slate-600 font-mono">
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -1041,7 +1135,7 @@ export default function DesktopCommanderDashboard() {
                     setGuestLanguage(newLang);
                     if (selectedRoomId) {
                       // Restart session with new language immediately
-                      handleLinkComms(selectedRoomId);
+                      handleLinkComms(selectedRoomId, newLang);
                     }
                   }}
                   className="flex-grow max-w-[150px] bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-300 rounded px-1.5 py-1 focus:ring-0 focus:outline-none"
